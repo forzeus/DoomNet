@@ -19,6 +19,14 @@ class _DoomNetIntroGateState extends State<DoomNetIntroGate>
   )..addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
         setState(() => _finished = true);
+        // Make the TV's first focus target reachable after splash fade.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final focused = FocusManager.instance.primaryFocus;
+          if (focused == null || focused is FocusScopeNode) {
+            FocusScope.of(context).nextFocus();
+          }
+        });
       }
     });
 

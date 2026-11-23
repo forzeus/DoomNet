@@ -8,6 +8,7 @@ on:
       - 'feat/doomnet-tv-branding-v01'
       - 'feat/doomnet-tv-dpad-v01'
       - 'feat/doomnet-green-logo-assets-v01'
+      - 'fix/doomnet-tv-native-remote-v02'
   workflow_dispatch:
 
 permissions:
@@ -54,7 +55,7 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Test Android TV remote focus and onboarding
-        run: flutter test test/features/intro/intro_layout_test.dart test/core/router/adaptive_layout_semantics_test.dart
+        run: flutter test test/features/intro/intro_layout_test.dart test/core/router/adaptive_layout_semantics_test.dart test/doomnet/doomnet_tv_remote_test.dart
 
       - name: Build the Android APK
         run: make android-apk-release

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:hiddify/core/app_info/app_info_provider.dart';
+import 'package:hiddify/doomnet/doomnet_tv_remote.dart';
 import 'package:hiddify/core/directories/directories_provider.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/constants.dart';
@@ -140,6 +141,23 @@ class AboutPage extends HookConsumerWidget {
           SliverList(
             delegate: SliverChildListDelegate([
               ...conditionalTiles,
+              // Temporary Android TV input diagnostic: distinguishes a remote
+              // whose Android key events reach us from a focus/traversal issue.
+              if (PlatformUtils.isAndroid && MediaQuery.sizeOf(context).width >= 800)
+                ListTile(
+                  leading: const Icon(Icons.gamepad_rounded),
+                  title: const Text('Проверка пульта Android TV'),
+                  subtitle: ValueListenableBuilder<int?>(
+                    valueListenable: DoomNetTvRemoteBridge.lastNativeKeyCode,
+                    builder: (_, keyCode, _) => Text(
+                      !DoomNetTvRemoteBridge.nativeBridgeEnabled.value
+                          ? 'Android-пульт: канал ещё не активен'
+                          : keyCode == null
+                              ? 'Android-пульт активен: нажмите стрелку или OK'
+                              : 'Android-пульт: получена кнопка $keyCode',
+                    ),
+                  ),
+                ),
               if (conditionalTiles.isNotEmpty) const Divider(),
               ListTile(
                 title: Text(t.pages.about.reportProblem),

@@ -7,6 +7,10 @@ import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.view.KeyEvent
+import android.app.UiModeManager
+import android.content.Context
+import android.content.res.Configuration
 import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,6 +27,7 @@ import com.hiddify.hiddify.constant.ServiceMode
 import com.hiddify.hiddify.constant.Status
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,6 +45,51 @@ class MainActivity : FlutterFragmentActivity(), ServiceConnection.Callback {
     }
 
     private val connection = ServiceConnection(this, this)
+
+    // The Android TV firmware may send D-pad presses to the Activity without
+    // the Flutter view ever turning them into a focused widget's KeyEvent.
+    // Use a dedicated, opt-in channel as a TV-specific input path.
+    private var tvRemoteChannel: MethodChannel? = null
+    private var tvRemoteReady = false
+    private val isTelevision: Boolean by lazy {
+        val ui = getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
+        ui?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION ||
+            packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
+            packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION) ||
+            // Some Android 11 TV firmwares omit Leanback/Television feature flags.
+            (resources.configuration.screenWidthDp >= 700 &&
+                !packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN))
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (isTelevision && tvRemoteReady && event.keyCode in setOf(
+                KeyEvent.KEYCODE_DPAD_UP,
+                KeyEvent.KEYCODE_DPAD_DOWN,
+                KeyEvent.KEYCODE_DPAD_LEFT,
+                KeyEvent.KEYCODE_DPAD_RIGHT,
+                KeyEvent.KEYCODE_DPAD_CENTER,
+                KeyEvent.KEYCODE_ENTER,
+                KeyEvent.KEYCODE_NUMPAD_ENTER,
+                KeyEvent.KEYCODE_BUTTON_A,
+            )
+        ) {
+            // Arrow-key repeats support scrolling, but holding OK must not
+            // toggle the VPN or activate the same button several times.
+            // Consume key-up to avoid a duplicate event in Flutter.
+            val isActivation = event.keyCode in setOf(
+                KeyEvent.KEYCODE_DPAD_CENTER,
+                KeyEvent.KEYCODE_ENTER,
+                KeyEvent.KEYCODE_NUMPAD_ENTER,
+                KeyEvent.KEYCODE_BUTTON_A,
+            )
+            if (event.action == KeyEvent.ACTION_DOWN && (!isActivation || event.repeatCount == 0)) {
+                tvRemoteChannel?.invokeMethod("key", event.keyCode)
+            }
+            return true
+        }
+        // Back, volume, media keys, non-TV devices: keep their original behavior.
+        return super.dispatchKeyEvent(event)
+    }
 
     val logList = LinkedList<String>()
     var logCallback: ((Boolean) -> Unit)? = null
@@ -59,6 +109,26 @@ class MainActivity : FlutterFragmentActivity(), ServiceConnection.Callback {
         super.configureFlutterEngine(flutterEngine)
         instance = this
         reconnect()
+        val channel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "com.forzeus.doomnet/tv_remote",
+        )
+        tvRemoteChannel = channel
+        channel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "start" -> {
+                    // Flutter can opt in for a large TV viewport, even on
+                    // set-top boxes which misreport their Android TV features.
+                    tvRemoteReady = isTelevision || (call.arguments as? Boolean == true)
+                    result.success(tvRemoteReady)
+                }
+                "stop" -> {
+                    tvRemoteReady = false
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
         flutterEngine.plugins.add(MethodHandler(lifecycleScope))
         flutterEngine.plugins.add(PlatformSettingsHandler())
         flutterEngine.plugins.add(EventHandler())
@@ -171,6 +241,9 @@ class MainActivity : FlutterFragmentActivity(), ServiceConnection.Callback {
 
 
     override fun onDestroy() {
+        tvRemoteReady = false
+        tvRemoteChannel?.setMethodCallHandler(null)
+        tvRemoteChannel = null
         connection.disconnect()
         super.onDestroy()
     }
