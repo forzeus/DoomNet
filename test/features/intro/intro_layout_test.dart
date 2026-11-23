@@ -5,8 +5,8 @@ import 'package:hiddify/core/analytics/analytics_controller.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/preferences/preferences_provider.dart';
 import 'package:hiddify/core/router/go_router/go_router_notifier.dart';
-import 'package:hiddify/features/intro/widget/intro_page.dart';
 import 'package:hiddify/features/common/general_pref_tiles.dart';
+import 'package:hiddify/features/intro/widget/intro_page.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
