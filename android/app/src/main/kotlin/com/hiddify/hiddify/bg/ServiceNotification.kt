@@ -87,7 +87,7 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
             .setShowWhen(false)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setSmallIcon(R.drawable.ic_stat_logo)
+            .setSmallIcon(R.drawable.ic_stat_doomnet)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setContentIntent(
                 PendingIntent.getActivity(
@@ -114,7 +114,7 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
     fun show(profileName: String, @StringRes contentTextId: Int) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Application.notification.createNotificationChannel(
-                NotificationChannel(notificationChannel, "hiddify service", NotificationManager.IMPORTANCE_LOW)
+                NotificationChannel(notificationChannel, "DoomNet VPN", NotificationManager.IMPORTANCE_LOW)
             )
         }
         synchronized(lock) {
@@ -126,7 +126,7 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
     private fun render(profile: String, text: String, header: String, foreground: Boolean = false) {
         synchronized(lock) {
             if (!active) return
-            val next = Triple(profile.ifBlank { "Hiddify" }, text, header)
+            val next = Triple(profile.ifBlank { "DoomNet" }, text, header)
             if (!foreground && next == shown) return
             shown = next
             val built = notificationBuilder
