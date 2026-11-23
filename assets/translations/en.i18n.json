@@ -1,6 +1,6 @@
 {
   "common": {
-    "appTitle": "Hiddify",
+    "appTitle": "DoomNet",
     "start": "Start",
     "version": "Version",
     "ok": "OK",
@@ -446,7 +446,7 @@
         "themeMode": "Theme mode",
         "themeModes": {
           "system": "System default",
-          "dark": "Dark mode",
+          "dark": "Green gradient",
           "light": "Light mode",
           "black": "Black mode"
         },
