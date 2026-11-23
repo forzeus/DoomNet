@@ -143,9 +143,11 @@ class AboutPage extends HookConsumerWidget {
                   subtitle: ValueListenableBuilder<int?>(
                     valueListenable: DoomNetTvRemoteBridge.lastNativeKeyCode,
                     builder: (_, keyCode, _) => Text(
-                      keyCode == null
-                          ? 'Нажмите стрелку или OK на пульте'
-                          : 'Получена кнопка Android: $keyCode',
+                      !DoomNetTvRemoteBridge.nativeBridgeEnabled.value
+                          ? 'Android-пульт: канал ещё не активен'
+                          : keyCode == null
+                              ? 'Android-пульт активен: нажмите стрелку или OK'
+                              : 'Android-пульт: получена кнопка $keyCode',
                     ),
                   ),
                 ),

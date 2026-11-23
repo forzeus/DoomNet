@@ -117,8 +117,10 @@ class MainActivity : FlutterFragmentActivity(), ServiceConnection.Callback {
         channel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "start" -> {
-                    tvRemoteReady = true
-                    result.success(null)
+                    // Flutter can opt in for a large TV viewport, even on
+                    // set-top boxes which misreport their Android TV features.
+                    tvRemoteReady = isTelevision || (call.arguments as? Boolean == true)
+                    result.success(tvRemoteReady)
                 }
                 "stop" -> {
                     tvRemoteReady = false

@@ -20,6 +20,7 @@ class DoomNetTvRemoteBridge extends StatefulWidget {
 
   /// Debugging aid for the TV About page; never stores or transmits key data.
   static final ValueNotifier<int?> lastNativeKeyCode = ValueNotifier<int?>(null);
+  static final ValueNotifier<bool> nativeBridgeEnabled = ValueNotifier<bool>(false);
 
   // Android KeyEvent.KEYCODE_DPAD_*, ENTER and gamepad A.
   @visibleForTesting
@@ -58,14 +59,29 @@ class DoomNetTvRemoteBridge extends StatefulWidget {
 }
 
 class _DoomNetTvRemoteBridgeState extends State<DoomNetTvRemoteBridge> {
+  bool? _lastTvViewport;
+
   @override
   void initState() {
     super.initState();
     if (!kIsWeb && Platform.isAndroid) {
       DoomNetTvRemoteBridge._channel.setMethodCallHandler(_onPlatformCall);
-      // A Flutter run on a device without our TV plugin remains usable.
-      DoomNetTvRemoteBridge._channel.invokeMethod<void>('start').catchError((Object _) {});
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (kIsWeb || !Platform.isAndroid) return;
+    // TV vendors may omit FEATURE_LEANBACK; our wide Flutter layout is
+    // independent confirmation that this is the TV application surface.
+    final wideScreen = MediaQuery.sizeOf(context).width >= 700;
+    if (_lastTvViewport == wideScreen) return;
+    _lastTvViewport = wideScreen;
+    DoomNetTvRemoteBridge._channel
+        .invokeMethod<bool>('start', wideScreen)
+        .then((enabled) => DoomNetTvRemoteBridge.nativeBridgeEnabled.value = enabled == true)
+        .catchError((Object _) {});
   }
 
   Future<void> _onPlatformCall(MethodCall call) async {
@@ -79,6 +95,7 @@ class _DoomNetTvRemoteBridgeState extends State<DoomNetTvRemoteBridge> {
   void dispose() {
     if (!kIsWeb && Platform.isAndroid) {
       DoomNetTvRemoteBridge._channel.setMethodCallHandler(null);
+      DoomNetTvRemoteBridge.nativeBridgeEnabled.value = false;
       DoomNetTvRemoteBridge._channel.invokeMethod<void>('stop').catchError((Object _) {});
     }
     super.dispose();
