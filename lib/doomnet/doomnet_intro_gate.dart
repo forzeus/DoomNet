@@ -18,6 +18,15 @@ class _DoomNetIntroGateState extends State<DoomNetIntroGate>
   )..addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
         setState(() => _finished = true);
+        // ExcludeFocus blocks autofocus while the splash overlays the router.
+        // Restore focus after the visible route becomes focusable.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final focused = FocusManager.instance.primaryFocus;
+          if (focused == null || focused is FocusScopeNode) {
+            FocusScope.of(context).nextFocus();
+          }
+        });
       }
     });
 
