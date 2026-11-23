@@ -11,6 +11,11 @@ class ConnectionButtonTheme extends ThemeExtension<ConnectionButtonTheme> {
     connectedColor: Color(0xFF44a334),
   );
 
+  static const ConnectionButtonTheme doomnet = ConnectionButtonTheme(
+    idleColor: Color(0xFF238957),
+    connectedColor: Color(0xFF15C87B),
+  );
+
   @override
   ThemeExtension<ConnectionButtonTheme> copyWith({Color? idleColor, Color? connectedColor}) => ConnectionButtonTheme(
     idleColor: idleColor ?? this.idleColor,

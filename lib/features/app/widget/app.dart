@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hiddify/core/app_info/app_info_provider.dart';
+import 'package:hiddify/doomnet/doomnet_intro_gate.dart';
 import 'package:hiddify/core/localization/fallback_localizations.dart';
 import 'package:hiddify/core/localization/locale_extensions.dart';
 import 'package:hiddify/core/localization/locale_preferences.dart';
@@ -189,6 +190,7 @@ class App extends HookConsumerWidget with WidgetsBindingObserver, PresLogger {
                     if (kDebugMode && _debugAccessibility) {
                       return AccessibilityTools(checkFontOverflows: true, child: child);
                     }
+                    child = DoomNetIntroGate(child: child);
                     return AnnotatedRegion<SystemUiOverlayStyle>(
                       // The page draws behind the bars, but with 3-button navigation, and with
                       // gestures on One UI, Android paints a navigation bar background over the

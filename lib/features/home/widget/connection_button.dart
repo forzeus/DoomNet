@@ -24,7 +24,6 @@ import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
 import 'package:hiddify/features/proxy/model/connection_health.dart';
 import 'package:hiddify/features/proxy/model/proxy_entity.dart';
 import 'package:hiddify/features/stats/notifier/stats_notifier.dart';
-import 'package:hiddify/gen/assets.gen.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 /// What the button shows, one value per look.
@@ -91,8 +90,7 @@ class ConnectionButton extends HookConsumerWidget {
     final degraded = look == _Look.connected && (health?.degraded ?? false);
     final hopPending = look == _Look.connected && (health?.hopPending ?? false);
 
-    const buttonTheme = ConnectionButtonTheme.light;
-    final today = DateTime.now();
+    final buttonTheme = Theme.of(context).extension<ConnectionButtonTheme>() ?? ConnectionButtonTheme.light;
     final button = _ConnectionButton(
       look: look,
       onTap: onTap,
@@ -128,19 +126,14 @@ class ConnectionButton extends HookConsumerWidget {
       buttonColor: switch (look) {
         _Look.connected when degraded => _degradedColor,
         // the traffic waits for the chain hop: still on its way
-        _Look.connected when hopPending => const Color(0xFF455FE9),
+        _Look.connected when hopPending => Theme.of(context).colorScheme.primary,
         _Look.connected => buttonTheme.connectedColor!,
         _Look.noProxies => const Color.fromARGB(255, 185, 176, 103),
         _Look.failed => Colors.red,
         // the logo's own blue while the connection is on its way
-        _Look.connecting || _Look.waiting || _Look.hotReloading || _Look.disconnecting => const Color(0xFF455FE9),
+        _Look.connecting || _Look.waiting || _Look.hotReloading || _Look.disconnecting => Theme.of(context).colorScheme.primary,
         _ => buttonTheme.idleColor!,
       },
-      image: switch (look) {
-        _Look.connected || _Look.noProxies || _Look.hotReloading => Assets.images.connectNorouz,
-        _ => Assets.images.disconnectNorouz,
-      },
-      useImage: today.day >= 19 && today.day <= 23 && today.month == 3,
       // reduce animations stills only the light flowing round the button while connected; the
       // radar, the connecting and disconnecting waves keep moving. The system's reduce motion
       // stills the whole button.
@@ -227,8 +220,6 @@ class _ConnectionButton extends HookWidget {
     required this.onHop,
     required this.hopLabel,
     required this.buttonColor,
-    required this.image,
-    required this.useImage,
     required this.reduceFlow,
   });
 
@@ -257,8 +248,6 @@ class _ConnectionButton extends HookWidget {
   /// What the badge says to a screen reader and in its tooltip: the chain and its state.
   final String hopLabel;
   final Color buttonColor;
-  final AssetGenImage image;
-  final bool useImage;
 
   /// Reduce animations: while connected, the light round the button stands still, as it was when
   /// it stopped, and only steps with the traffic; the logo stops breathing once it has settled.
@@ -457,7 +446,7 @@ class _ConnectionButton extends HookWidget {
                                     // in steps, so it repaints only when the traffic changes a lot
                                     traffic: still || flowStill ? _stepped(target) : light.traffic,
                                     dark: theme.brightness == Brightness.dark,
-                                    drawLogo: !useImage,
+                                    drawLogo: false,
                                     logoOpacity: look == _Look.loading ? .38 : 1,
                                     pixelRatio: MediaQuery.devicePixelRatioOf(context),
                                     simple: still || flowStill,
@@ -481,7 +470,20 @@ class _ConnectionButton extends HookWidget {
                           hoverColor: Colors.black.withValues(alpha: .05),
                           highlightColor: Colors.black.withValues(alpha: .06),
                           splashColor: Colors.black.withValues(alpha: .08),
-                          child: useImage ? Padding(padding: const EdgeInsets.all(36), child: image.image()) : null,
+                          child: Center(
+                             child: TweenAnimationBuilder<Color?>(
+                               tween: ColorTween(end: buttonColor),
+                               duration: const Duration(milliseconds: 420),
+                               curve: Curves.easeInOutCubic,
+                               builder: (context, color, _) => Icon(
+                                 Icons.power_settings_new_rounded,
+                                 size: 70,
+                                 color: (color ?? buttonColor).withValues(
+                                   alpha: look == _Look.loading ? .38 : 1,
+                                 ),
+                               ),
+                             ),
+                           ),
                         ),
                       ),
                       Positioned.fill(

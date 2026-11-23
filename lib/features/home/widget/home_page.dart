@@ -2,6 +2,9 @@ import 'package:dartx/dartx.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:hiddify/core/app_info/app_info_provider.dart';
+import 'package:hiddify/core/theme/app_theme_mode.dart';
+import 'package:hiddify/core/theme/theme_preferences.dart';
+import 'package:hiddify/doomnet/doomnet_brand.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/router/bottom_sheets/bottom_sheets_notifier.dart';
 import 'package:hiddify/features/home/widget/connection_button.dart';
@@ -10,7 +13,6 @@ import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/profile/widget/profile_tile.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_card.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_delay_indicator.dart';
-import 'package:hiddify/gen/assets.gen.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
@@ -33,20 +35,8 @@ class HomePage extends HookConsumerWidget {
         //         },
         //       )
         //     : null,
-        title: Row(
-          children: [
-            Assets.images.logo.svg(height: 24),
-            const Gap(8),
-            Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(text: t.common.appTitle),
-                  const TextSpan(text: " "),
-                  const WidgetSpan(child: AppVersionLabel(), alignment: PlaceholderAlignment.middle),
-                ],
-              ),
-            ),
-          ],
+        title: const Row(
+          children: [DoomNetBrand(fontSize: 24), Gap(10), AppVersionLabel()],
         ),
         actions: [
           // IconButton(
@@ -83,7 +73,14 @@ class HomePage extends HookConsumerWidget {
                 // A sky behind the connect button, as at an eclipse: in dark mode a touch lighter round
                 // the button, fading to the theme's own dark; in light mode brightest there, a touch
                 // darker towards the edges. Both barely there, centred on where the button sits.
-                gradient: theme.brightness == Brightness.dark
+                gradient: ref.watch(themePreferencesProvider) == AppThemeMode.dark
+                    ? const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF134A2D), Color(0xFF0A2518), Color(0xFF020805)],
+                        stops: [0, .5, 1],
+                      )
+                    : theme.brightness == Brightness.dark
                     ? RadialGradient(
                         center: const Alignment(0, -.15),
                         radius: .85,
@@ -241,14 +238,10 @@ class AppVersionLabel extends HookConsumerWidget {
     return Semantics(
       label: t.common.version,
       button: false,
-      child: Container(
-        decoration: BoxDecoration(color: theme.colorScheme.secondaryContainer, borderRadius: BorderRadius.circular(4)),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-        child: Text(
-          version,
-          textDirection: TextDirection.ltr,
-          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSecondaryContainer),
-        ),
+      child: Text(
+        version,
+        textDirection: TextDirection.ltr,
+        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
       ),
     );
   }
