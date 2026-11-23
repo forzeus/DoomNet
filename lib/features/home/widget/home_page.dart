@@ -33,7 +33,26 @@ class HomePage extends HookConsumerWidget {
         //         },
         //       )
         //     : null,
-        title: const DoomNetBrand(fontSize: 24),
+        title: Row(
+          children: [
+            const DoomNetBrand(fontSize: 24),
+            const Gap(20),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  'Для открытия всех серверов подписки, Подключитесь',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         actions: [
           // IconButton(
           //     onPressed: () => const QuickSettingsRoute().push(context),
