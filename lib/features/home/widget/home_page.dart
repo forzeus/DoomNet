@@ -1,7 +1,5 @@
-import 'package:dartx/dartx.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
-import 'package:hiddify/core/app_info/app_info_provider.dart';
 import 'package:hiddify/core/theme/app_theme_mode.dart';
 import 'package:hiddify/core/theme/theme_preferences.dart';
 import 'package:hiddify/doomnet/doomnet_brand.dart';
@@ -35,9 +33,7 @@ class HomePage extends HookConsumerWidget {
         //         },
         //       )
         //     : null,
-        title: const Row(
-          children: [DoomNetBrand(fontSize: 24), Gap(10), AppVersionLabel()],
-        ),
+        title: const DoomNetBrand(fontSize: 24),
         actions: [
           // IconButton(
           //     onPressed: () => const QuickSettingsRoute().push(context),
@@ -224,25 +220,3 @@ class HomePage extends HookConsumerWidget {
   }
 }
 
-class AppVersionLabel extends HookConsumerWidget {
-  const AppVersionLabel({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = ref.watch(translationsProvider).requireValue;
-    final theme = Theme.of(context);
-
-    final version = ref.watch(appInfoProvider).requireValue.presentVersion;
-    if (version.isBlank) return const SizedBox();
-
-    return Semantics(
-      label: t.common.version,
-      button: false,
-      child: Text(
-        version,
-        textDirection: TextDirection.ltr,
-        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-      ),
-    );
-  }
-}
