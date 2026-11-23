@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="stop">Stop</string>
-    <string name="quick_toggle">Toggle</string>
-    <string name="status_starting">Connecting…</string>
-    <string name="status_started">Connected</string>
+    <string name="stop">Остановить</string>
+    <string name="quick_toggle">Переключить</string>
+    <string name="status_starting">Подключение…</string>
+    <string name="status_started">Подключено</string>
     <string name="mode_vpn">VPN</string>
-    <string name="mode_proxy">Proxy</string>
+    <string name="mode_proxy">Прокси</string>
 </resources>

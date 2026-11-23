@@ -37,6 +37,13 @@ void main() {
       expect(release.asset('Hiddify-MacOS.dmg')!.size, 42);
     });
 
+    test('DoomNet release tags retain semantic version numbers', () {
+      final release = GithubReleaseParser.parse(_release('doomnet-v5.9.16'))!;
+      expect(release.version, '5.9.16');
+      expect(release.releaseTag, 'doomnet-v5.9.16');
+      expect(release.preRelease, isFalse);
+    });
+
     test('still a pre-release on GitHub is one, whatever its tag', () {
       expect(GithubReleaseParser.parse(_release('v5.9.2', prerelease: true))!.preRelease, isTrue);
     });
@@ -120,6 +127,19 @@ void main() {
       expect(asset(InstallKind.androidApk, abis: ['x86_64']), 'Hiddify-Android-x86_64.apk');
       expect(asset(InstallKind.androidApk, abis: ['riscv64']), 'Hiddify-Android-universal.apk');
       expect(asset(InstallKind.androidApk), 'Hiddify-Android-universal.apk');
+    });
+
+    test('DoomNet selects the TV ABI APK and falls back to its universal APK', () {
+      final doomnetRelease = GithubReleaseParser.parse(
+        _release('doomnet-v5.9.16', assets: [
+          'DoomNet-Android-arm64.apk',
+          'DoomNet-Android-arm32.apk',
+          'DoomNet-Android-universal.apk',
+        ]),
+      )!;
+      expect(InstallKind.androidApk.assetIn(doomnetRelease, abis: ['armeabi-v7a'])?.name, 'DoomNet-Android-arm32.apk');
+      expect(InstallKind.androidApk.assetIn(doomnetRelease, abis: ['arm64-v8a'])?.name, 'DoomNet-Android-arm64.apk');
+      expect(InstallKind.androidApk.assetIn(doomnetRelease, abis: ['x86_64'])?.name, 'DoomNet-Android-universal.apk');
     });
 
     test('each desktop install takes its own format, never a store build', () {

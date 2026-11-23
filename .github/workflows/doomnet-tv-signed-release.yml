@@ -1,0 +1,148 @@
+# Run manually from Actions once merged to main and the four signing
+# secrets have been configured. Release APKs keep the SAME signing certificate.
+name: DoomNet Android TV signed release
+
+# The first merge to main publishes the initial signed version automatically.
+# Later releases run when pubspec version changes. Manual dispatch remains available.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - pubspec.yaml
+      - .github/workflows/doomnet-tv-signed-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: doomnet-tv-signed-release
+  cancel-in-progress: false
+
+jobs:
+  android-tv-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CHANNEL: prod
+      SENTRY_DSN: ''
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify the four Android signing secrets
+        env:
+          SIGNING_KEY: ${{ secrets.ANDROID_SIGNING_KEY }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          for name in SIGNING_KEY STORE_PASSWORD KEY_PASSWORD KEY_ALIAS; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing $name. Follow DOOMNET_UPDATES_SETUP.md."
+              exit 1
+            fi
+          done
+
+      - name: Read version and prevent release overwrites
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="$(sed -nE 's/^version: ([0-9]+\.[0-9]+\.[0-9]+)\+[0-9]+$/\1/p' pubspec.yaml)"
+          if [[ -z "$version" ]]; then
+            echo "::error::Expected version: MAJOR.MINOR.PATCH+BUILD in pubspec.yaml"
+            exit 1
+          fi
+          tag="doomnet-v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "::error::Release $tag already exists; bump the version first"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          packages: platform-tools
+
+      - name: Prepare Flutter and original Hiddify VPN core
+        uses: ./.github/actions/setup-flutter
+        with:
+          platform: android-apk
+          generated-code: 'false'
+
+      - name: Install stable signing key
+        env:
+          SIGNING_KEY: ${{ secrets.ANDROID_SIGNING_KEY }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$SIGNING_KEY" | base64 --decode > android/doomnet-release.jks
+          printf 'storeFile=%s\nstorePassword=%s\nkeyPassword=%s\nkeyAlias=%s\n' \
+            "$PWD/android/doomnet-release.jks" "$STORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" \
+            > android/key.properties
+
+      - name: Check update source and translations
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          flutter test test/features/app_update/app_update_test.dart
+
+      - name: Build signed APKs
+        run: make android-apk-release
+
+      - name: Verify signatures and collect APKs
+        run: |
+          set -euo pipefail
+          signer="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$signer"
+          mkdir -p out
+          apk=build/app/outputs/flutter-apk
+          cp "$apk/app-armeabi-v7a-release.apk" out/DoomNet-Android-arm32.apk
+          cp "$apk/app-arm64-v8a-release.apk" out/DoomNet-Android-arm64.apk
+          cp "$apk/app-x86_64-release.apk" out/DoomNet-Android-x86_64.apk
+          cp "$apk/app-release.apk" out/DoomNet-Android-universal.apk
+          for file in out/*.apk; do
+            "$signer" verify --verbose "$file"
+          done
+          ls -lh out
+
+      - name: Upload signed builds to Actions
+        uses: actions/upload-artifact@v6
+        with:
+          name: DoomNet-signed-APKs
+          path: out/*.apk
+          retention-days: 30
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Publish GitHub Release for DoomNet updater
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          printf '## Change Logs\n\n- DoomNet for Android TV %s.\n- Online updating through GitHub Releases.\n\n' "$VERSION" > release-notes.md
+          gh release create "$TAG" out/*.apk \
+            --title "DoomNet $VERSION" \
+            --notes-file release-notes.md \
+            --target "$GITHUB_SHA" \
+            --latest

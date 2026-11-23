@@ -19,14 +19,25 @@ class AppTheme {
   }
 
   ThemeData darkTheme(ColorScheme? darkColorScheme) {
-    final ColorScheme scheme =
-        darkColorScheme ?? ColorScheme.fromSeed(seedColor: const Color(0xFF293CA0), brightness: Brightness.dark);
+    final green = mode == AppThemeMode.dark;
+    final ColorScheme scheme = green
+        ? ColorScheme.fromSeed(
+            seedColor: const Color(0xFF17D884),
+            brightness: Brightness.dark,
+          ).copyWith(
+            primary: const Color(0xFF37F2A0),
+            onPrimary: const Color(0xFF002F19),
+            surface: const Color(0xFF0B1B13),
+            onSurface: const Color(0xFFE2F9EC),
+          )
+        : (darkColorScheme ??
+            ColorScheme.fromSeed(seedColor: const Color(0xFF293CA0), brightness: Brightness.dark));
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: mode.trueBlack ? Colors.black : scheme.surface,
+      scaffoldBackgroundColor: green ? const Color(0xFF06130D) : (mode.trueBlack ? Colors.black : scheme.surface),
       fontFamily: fontFamily,
-      extensions: const <ThemeExtension<dynamic>>{ConnectionButtonTheme.light},
+      extensions: <ThemeExtension<dynamic>>{green ? ConnectionButtonTheme.doomnet : ConnectionButtonTheme.light},
     );
   }
 

@@ -1,0 +1,102 @@
+# Test-only APK from DoomNet feature branches. It uses Gradle's temporary
+# debug key until the separate production release/signing pipeline is configured.
+name: DoomNet Android TV preview
+
+on:
+  push:
+    branches:
+      - 'feat/doomnet-tv-branding-v01'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: doomnet-tv-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-tv-preview:
+    name: Build Android TV preview APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CHANNEL: prod
+      SENTRY_DSN: ''
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          packages: platform-tools
+
+      - name: Prepare Flutter and original Hiddify VPN core
+        uses: ./.github/actions/setup-flutter
+        with:
+          platform: android-apk
+          generated-code: 'false'
+
+      - name: Run Dart static analysis
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Build the Android APK
+        run: make android-apk-release
+
+      - name: Collect per-architecture and universal APKs
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          apk=build/app/outputs/flutter-apk
+          cp "$apk/app-arm64-v8a-release.apk" out/DoomNet-arm64-v8a-PREVIEW.apk
+          cp "$apk/app-armeabi-v7a-release.apk" out/DoomNet-armeabi-v7a-PREVIEW.apk
+          cp "$apk/app-x86_64-release.apk" out/DoomNet-x86_64-PREVIEW.apk
+          cp "$apk/app-release.apk" out/DoomNet-universal-PREVIEW.apk
+          ls -lh out
+
+      - name: Upload ARM64 APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: DoomNet-arm64-v8a-PREVIEW
+          path: out/DoomNet-arm64-v8a-PREVIEW.apk
+          retention-days: 14
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Upload ARM32 APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: DoomNet-armeabi-v7a-PREVIEW
+          path: out/DoomNet-armeabi-v7a-PREVIEW.apk
+          retention-days: 14
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Upload x86_64 APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: DoomNet-x86_64-PREVIEW
+          path: out/DoomNet-x86_64-PREVIEW.apk
+          retention-days: 14
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Upload universal APK (fallback)
+        uses: actions/upload-artifact@v6
+        with:
+          name: DoomNet-universal-PREVIEW
+          path: out/DoomNet-universal-PREVIEW.apk
+          retention-days: 14
+          if-no-files-found: error
+          compression-level: 0

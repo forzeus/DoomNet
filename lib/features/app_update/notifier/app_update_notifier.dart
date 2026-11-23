@@ -85,19 +85,10 @@ class AppUpdateNotifier extends _$AppUpdateNotifier with AppLogger {
         .run();
   }
 
-  PreferencesEntry<int, dynamic> get _lastCheckPref => PreferencesEntry(
-    preferences: ref.read(sharedPreferencesProvider).requireValue,
-    key: 'last_update_check',
-    defaultValue: 0,
-  );
-
-  /// Outside a store, at most once a day: the release this copy can update to, when there is one
-  /// the user did not ignore.
+  /// Check once each application launch. The About page's manual action
+  /// calls [check] directly and is always available.
   Future<RemoteVersionEntity?> checkOnStart() async {
     if (!ref.read(appInfoProvider).requireValue.release.allowCustomUpdateChecker) return null;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - _lastCheckPref.read() < const Duration(days: 1).inMilliseconds) return null;
-    await _lastCheckPref.write(now);
     return switch (await check()) {
       AppUpdateStateAvailable(:final versionInfo) => versionInfo,
       _ => null,
