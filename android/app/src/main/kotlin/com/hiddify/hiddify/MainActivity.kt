@@ -55,7 +55,10 @@ class MainActivity : FlutterFragmentActivity(), ServiceConnection.Callback {
         val ui = getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
         ui?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION ||
             packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
-            packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+            packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION) ||
+            // Some Android 11 TV firmwares omit Leanback/Television feature flags.
+            (resources.configuration.screenWidthDp >= 700 &&
+                !packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN))
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -108,7 +111,7 @@ class MainActivity : FlutterFragmentActivity(), ServiceConnection.Callback {
             when (call.method) {
                 "start" -> {
                     tvRemoteReady = true
-                    result.success(isTelevision)
+                    result.success(null)
                 }
                 "stop" -> {
                     tvRemoteReady = false
