@@ -1,6 +1,7 @@
 import 'dart:ui' show Tristate;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -97,6 +98,17 @@ void main() {
     expect(destination('Settings').evaluate().single.getSemanticsData().flagsCollection.isSelected, Tristate.isTrue);
     expect(find.semantics.byLabel('sub page'), findsOne);
     handle.dispose();
+  });
+
+  testWidgets('TV navigation rail can move focus with the D-pad', (tester) async {
+    await pumpShell(tester, size: const Size(1280, 720), mobile: false);
+    final before = FocusManager.instance.primaryFocus;
+    expect(before, isNotNull, reason: 'TV navigation rail needs an initial focus');
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus, isNotNull);
+    expect(FocusManager.instance.primaryFocus, isNot(same(before)),
+        reason: 'A swallowed D-pad arrow cannot move focus to another destination');
   });
 
   testWidgets('bottom navigation bar destinations are in the semantics tree', (tester) async {

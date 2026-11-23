@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hiddify/core/localization/translations.dart';
-import 'package:hiddify/core/model/constants.dart';
 import 'package:hiddify/core/router/adaptive_layout/shell_route_action.dart';
 import 'package:hiddify/core/router/go_router/helper/active_breakpoint_notifier.dart';
 import 'package:hiddify/core/router/go_router/routing_config_notifier.dart';
@@ -25,34 +24,10 @@ class MyAdaptiveLayout extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider).requireValue;
-    // focus switch management
-    final primaryFocusHash = useState<int?>(null);
+    // TV/D-pad: let Flutter's Focus/Shortcuts pipeline handle arrow keys.
+    // The old HardwareKeyboard handler returned true for *every* arrow key,
+    // swallowing navigation before NavigationRail and the page could receive it.
     final navScopeNode = useFocusScopeNode();
-    useEffect(() {
-      bool handler(KeyEvent event) {
-        final arrows = isMobileBreakpoint ? KeyboardConst.verticalArrows : KeyboardConst.horizontalArrows;
-        if (!arrows.contains(event.logicalKey)) return false;
-        if (event is KeyDownEvent) {
-          primaryFocusHash.value = FocusManager.instance.primaryFocus.hashCode;
-        } else {
-          // focus node does not change => true.
-          if (primaryFocusHash.value == FocusManager.instance.primaryFocus.hashCode) {
-            if (branchesScope.values.any((node) => node.hasFocus)) {
-              navScopeNode.requestFocus();
-            } else if (navScopeNode.hasFocus) {
-              branchesScope[getNameOfBranch(isMobileBreakpoint, showProfilesAction, navigationShell.currentIndex)]
-                  ?.requestFocus();
-            }
-          }
-        }
-        return true;
-      }
-
-      HardwareKeyboard.instance.addHandler(handler);
-      return () {
-        HardwareKeyboard.instance.removeHandler(handler);
-      };
-    }, [isMobileBreakpoint, showProfilesAction, navigationShell.currentIndex]);
     // Owns the system back press for the whole shell.
     //
     // It has to sit here, on the visible shell, and nowhere else. A PopScope
@@ -99,6 +74,7 @@ class MyAdaptiveLayout extends HookConsumerWidget {
                     children: [
                       FocusScope(
                         node: navScopeNode,
+                        autofocus: true,
                         child: NavigationRail(
                           extended: Breakpoint(context).isDesktop(),
                           destinations: _navRailDests(_actions(t, showProfilesAction, isMobileBreakpoint)),

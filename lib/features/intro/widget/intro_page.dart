@@ -120,6 +120,7 @@ class IntroPage extends HookConsumerWidget with PresLogger {
                   ),
                   const Gap(24),
                   LocalePrefTile(
+                    autofocus: true,
                     // the language sets the region, even one guessed from the time zone, until the user picks one
                     onChanged: (locale) async {
                       if (_regionChosenByUser) return;

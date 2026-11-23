@@ -11,10 +11,13 @@ import 'package:hiddify/features/proxy/active/ip_widget.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class LocalePrefTile extends ConsumerWidget {
-  const LocalePrefTile({super.key, this.onChanged});
+  const LocalePrefTile({super.key, this.onChanged, this.autofocus = false});
 
   /// Called after the user picks a language (not on reset).
   final ValueChanged<AppLocale>? onChanged;
+
+  /// Give the language picker the initial D-pad focus during TV onboarding.
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,6 +25,8 @@ class LocalePrefTile extends ConsumerWidget {
 
     final locale = ref.watch(localePreferencesProvider);
     return ListTile(
+      autofocus: autofocus,
+      focusColor: Theme.of(context).colorScheme.primary.withValues(alpha: .24),
       title: Text(t.pages.settings.general.locale),
       subtitle: Text(locale.localeName),
       leading: const Icon(Icons.translate_rounded),
