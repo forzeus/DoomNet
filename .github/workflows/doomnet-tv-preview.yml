@@ -1,0 +1,71 @@
+# Test-only APK from DoomNet feature branches. It uses Gradle's temporary
+# debug key until the separate production release/signing pipeline is configured.
+name: DoomNet Android TV preview
+
+on:
+  push:
+    branches:
+      - 'feat/doomnet-tv-branding-v01'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: doomnet-tv-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-tv-preview:
+    name: Build Android TV preview APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CHANNEL: prod
+      SENTRY_DSN: ''
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          packages: platform-tools
+
+      - name: Prepare Flutter and original Hiddify VPN core
+        uses: ./.github/actions/setup-flutter
+        with:
+          platform: android-apk
+          generated-code: 'false'
+
+      - name: Run Dart static analysis
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Build the Android APK
+        run: make android-apk-release
+
+      - name: Collect universal DoomNet APK
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          cp build/app/outputs/flutter-apk/app-release.apk out/DoomNet-Android-TV-PREVIEW.apk
+          ls -lh out
+
+      - name: Upload test APK (not a signed production release)
+        uses: actions/upload-artifact@v6
+        with:
+          name: DoomNet-Android-TV-PREVIEW
+          path: out/DoomNet-Android-TV-PREVIEW.apk
+          retention-days: 14
+          if-no-files-found: error
+          compression-level: 0
