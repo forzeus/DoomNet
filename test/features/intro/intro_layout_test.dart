@@ -5,6 +5,7 @@ import 'package:hiddify/core/analytics/analytics_controller.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/preferences/preferences_provider.dart';
 import 'package:hiddify/core/router/go_router/go_router_notifier.dart';
+import 'package:hiddify/features/common/general_pref_tiles.dart';
 import 'package:hiddify/features/intro/widget/intro_page.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,6 +49,15 @@ void main() {
     );
     await settle(tester);
   }
+
+  testWidgets('D-pad starts on the language picker on Android TV', (tester) async {
+    await show(tester, const Size(1280, 720), 1.0);
+    final tile = tester.widget<ListTile>(
+      find.descendant(of: find.byType(LocalePrefTile), matching: find.byType(ListTile)),
+    );
+    expect(tile.autofocus, isTrue);
+    expect(FocusManager.instance.primaryFocus, isNotNull);
+  });
 
   for (final (name, size, ratio) in [
     ('Android 7 phone', const Size(360, 640), 2.0),

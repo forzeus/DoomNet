@@ -37,6 +37,7 @@ class ValuePreferenceWidget<T> extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
+      focusColor: Theme.of(context).colorScheme.primary.withValues(alpha: .24),
       title: Text(title),
       subtitle: Text(presentValue?.call(value) ?? value.toString()),
       leading: icon != null ? Icon(icon) : null,
@@ -114,6 +115,7 @@ class ChoicePreferenceWidget<T> extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
+      focusColor: Theme.of(context).colorScheme.primary.withValues(alpha: .24),
       title: Text(title),
       subtitle: Text(presentChoice(selected)),
       leading: icon != null ? Icon(icon) : null,

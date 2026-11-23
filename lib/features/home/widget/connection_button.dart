@@ -513,7 +513,15 @@ class _ConnectionButton extends HookWidget {
                           child: Semantics(
                             button: true,
                             label: errorDetailsLabel,
-                            child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: onErrorDetails),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: onErrorDetails,
+                                customBorder: const CircleBorder(),
+                                focusColor: theme.colorScheme.primary.withValues(alpha: .25),
+                                child: const SizedBox.expand(),
+                              ),
+                            ),
                           ),
                         ),
                       // the chain hop sits on the rim at the top left, half on the button
@@ -704,17 +712,22 @@ class _ChainBadge extends StatelessWidget {
       label: label,
       child: Tooltip(
         message: label,
-        child: GestureDetector(
-          onTap: onTap,
-          behavior: HitTestBehavior.opaque,
-          // its shimmer and breathing repaint the badge alone, not the button and the page
-          child: RepaintBoundary(
-            child: Center(
-              child: AnimatedSwitcher(
-                layoutBuilder: uniqueKeysLayout(),
-                duration: const Duration(milliseconds: 250),
-                transitionBuilder: (child, a) => ScaleTransition(scale: a, child: child),
-                child: KeyedSubtree(key: ValueKey(_glyph), child: glyph),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            focusColor: theme.colorScheme.primary.withValues(alpha: .25),
+            // Focusable for Android TV OK/Enter, unlike GestureDetector.
+            // Its shimmer and breathing repaint the badge alone.
+            child: RepaintBoundary(
+              child: Center(
+                child: AnimatedSwitcher(
+                  layoutBuilder: uniqueKeysLayout(),
+                  duration: const Duration(milliseconds: 250),
+                  transitionBuilder: (child, a) => ScaleTransition(scale: a, child: child),
+                  child: KeyedSubtree(key: ValueKey(_glyph), child: glyph),
+                ),
               ),
             ),
           ),

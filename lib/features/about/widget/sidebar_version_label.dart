@@ -9,7 +9,10 @@ class SidebarVersionLabel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final version = ref.watch(appInfoProvider).requireValue.presentVersion;
+    // PackageInfo loads asynchronously on Android TV. Do not crash the
+    // navigation rail while that tiny bit of metadata is still loading.
+    final version = ref.watch(appInfoProvider).valueOrNull?.presentVersion;
+    if (version == null) return const SizedBox.shrink();
     final t = ref.watch(translationsProvider).requireValue;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
