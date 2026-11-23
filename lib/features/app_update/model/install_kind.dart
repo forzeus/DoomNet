@@ -57,7 +57,15 @@ enum InstallKind {
   ReleaseAsset? assetIn(RemoteVersionEntity release, {List<String> abis = const [], bool arm64 = false}) =>
       switch (this) {
         androidApk =>
+          // Prefer the matching ABI from a signed DoomNet release.
           release.asset(switch (abis.firstOrNull) {
+                'arm64-v8a' => 'DoomNet-Android-arm64.apk',
+                'armeabi-v7a' => 'DoomNet-Android-arm32.apk',
+                'x86_64' => 'DoomNet-Android-x86_64.apk',
+                _ => 'DoomNet-Android-universal.apk',
+              }) ??
+              release.asset('DoomNet-Android-universal.apk') ??
+              release.asset(switch (abis.firstOrNull) {
                 'arm64-v8a' => 'Hiddify-Android-arm64.apk',
                 'armeabi-v7a' => 'Hiddify-Android-arm7.apk',
                 'x86_64' => 'Hiddify-Android-x86_64.apk',

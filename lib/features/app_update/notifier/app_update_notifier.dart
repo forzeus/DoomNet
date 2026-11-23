@@ -2,8 +2,6 @@ import 'package:hiddify/core/app_info/app_info_provider.dart';
 import 'package:hiddify/core/localization/locale_preferences.dart';
 import 'package:hiddify/core/model/environment.dart';
 import 'package:hiddify/core/preferences/general_preferences.dart';
-import 'package:hiddify/core/preferences/preferences_provider.dart';
-import 'package:hiddify/core/utils/preferences_utils.dart';
 import 'package:hiddify/features/app_update/data/app_update_data_providers.dart';
 import 'package:hiddify/features/app_update/model/app_update_failure.dart';
 import 'package:hiddify/features/app_update/model/remote_version_entity.dart';
@@ -85,19 +83,10 @@ class AppUpdateNotifier extends _$AppUpdateNotifier with AppLogger {
         .run();
   }
 
-  PreferencesEntry<int, dynamic> get _lastCheckPref => PreferencesEntry(
-    preferences: ref.read(sharedPreferencesProvider).requireValue,
-    key: 'last_update_check',
-    defaultValue: 0,
-  );
-
-  /// Outside a store, at most once a day: the release this copy can update to, when there is one
-  /// the user did not ignore.
+  /// Check once each application launch. The About page's manual action
+  /// calls [check] directly and is always available.
   Future<RemoteVersionEntity?> checkOnStart() async {
     if (!ref.read(appInfoProvider).requireValue.release.allowCustomUpdateChecker) return null;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - _lastCheckPref.read() < const Duration(days: 1).inMilliseconds) return null;
-    await _lastCheckPref.write(now);
     return switch (await check()) {
       AppUpdateStateAvailable(:final versionInfo) => versionInfo,
       _ => null,
