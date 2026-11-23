@@ -35,6 +35,13 @@ class HomePage extends HookConsumerWidget {
         //     : null,
         title: Row(
           children: [
+            const Image(
+              image: AssetImage('assets/images/doomnet_orbit.webp'),
+              width: 38,
+              height: 38,
+              filterQuality: FilterQuality.medium,
+            ),
+            const Gap(8),
             const DoomNetBrand(fontSize: 24),
             const Gap(20),
             Expanded(

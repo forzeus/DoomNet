@@ -107,6 +107,13 @@ class AboutPage extends HookConsumerWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          const Image(
+                            image: AssetImage('assets/images/doomnet_orbit.webp'),
+                            width: 84,
+                            height: 84,
+                            filterQuality: FilterQuality.medium,
+                          ),
+                          const Gap(8),
                           Text(
                             t.common.appTitle,
                             textAlign: TextAlign.center,

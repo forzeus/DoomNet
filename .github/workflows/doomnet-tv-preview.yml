@@ -7,6 +7,7 @@ on:
     branches:
       - 'feat/doomnet-tv-branding-v01'
       - 'feat/doomnet-tv-dpad-v01'
+      - 'feat/doomnet-green-logo-assets-v01'
   workflow_dispatch:
 
 permissions:
