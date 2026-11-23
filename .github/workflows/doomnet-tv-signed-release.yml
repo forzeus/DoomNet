@@ -2,7 +2,15 @@
 # secrets have been configured. Release APKs keep the SAME signing certificate.
 name: DoomNet Android TV signed release
 
+# The first merge to main publishes the initial signed version automatically.
+# Later releases run when pubspec version changes. Manual dispatch remains available.
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - pubspec.yaml
+      - .github/workflows/doomnet-tv-signed-release.yml
   workflow_dispatch:
 
 permissions:
