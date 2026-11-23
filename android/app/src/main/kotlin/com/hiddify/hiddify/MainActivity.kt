@@ -73,9 +73,16 @@ class MainActivity : FlutterFragmentActivity(), ServiceConnection.Callback {
                 KeyEvent.KEYCODE_BUTTON_A,
             )
         ) {
-            // Deliver only key-down: key-up and repeats must not activate twice.
-            // Consume the Android event to avoid also dispatching it to Flutter.
-            if (event.action == KeyEvent.ACTION_DOWN) {
+            // Arrow-key repeats support scrolling, but holding OK must not
+            // toggle the VPN or activate the same button several times.
+            // Consume key-up to avoid a duplicate event in Flutter.
+            val isActivation = event.keyCode in setOf(
+                KeyEvent.KEYCODE_DPAD_CENTER,
+                KeyEvent.KEYCODE_ENTER,
+                KeyEvent.KEYCODE_NUMPAD_ENTER,
+                KeyEvent.KEYCODE_BUTTON_A,
+            )
+            if (event.action == KeyEvent.ACTION_DOWN && (!isActivation || event.repeatCount == 0)) {
                 tvRemoteChannel?.invokeMethod("key", event.keyCode)
             }
             return true
