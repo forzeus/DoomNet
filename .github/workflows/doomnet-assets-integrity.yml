@@ -1,0 +1,45 @@
+name: DoomNet branding asset integrity
+
+on:
+  push:
+    branches:
+      - feat/doomnet-green-logo-assets-v01
+    paths:
+      - .github/workflows/doomnet-assets-integrity.yml
+
+permissions:
+  contents: write
+
+jobs:
+  verify-and-normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate WebP RIFF length and remove accidental trailing bytes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          files = [
+              Path('assets/images/doomnet_orbit.webp'),
+              Path('android/app/src/main/res/drawable-nodpi/doomnet_launcher.webp'),
+              Path('android/app/src/main/res/drawable-nodpi/doomnet_tv_banner.webp'),
+          ]
+          for p in files:
+              data = p.read_bytes()
+              assert data[:4] == b'RIFF' and data[8:12] == b'WEBP', f'Invalid WebP: {p}'
+              expected = int.from_bytes(data[4:8], 'little') + 8
+              assert len(data) >= expected, f'Truncated WebP: {p}'
+              if len(data) > expected:
+                  print(f'{p}: trimming {len(data)-expected} extra bytes')
+                  p.write_bytes(data[:expected])
+              print(f'{p}: {expected} bytes verified')
+          PY
+      - name: Commit normalized binary assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/images/doomnet_orbit.webp android/app/src/main/res/drawable-nodpi/
+          if ! git diff --staged --quiet; then
+            git commit -m "fix(assets): normalize DoomNet WebP RIFF image bytes"
+            git push origin HEAD:feat/doomnet-green-logo-assets-v01
+          fi
