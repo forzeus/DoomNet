@@ -6,6 +6,7 @@ import 'package:hiddify/core/model/constants.dart';
 import 'package:hiddify/core/theme/theme_extensions.dart';
 import 'package:hiddify/core/widget/shimmer_skeleton.dart';
 import 'package:hiddify/core/widget/unique_keys_layout.dart';
+import 'package:hiddify/doomnet/doomnet_tv_focus.dart';
 import 'package:hiddify/features/connection/model/connection_status.dart';
 import 'package:hiddify/features/connection/notifier/connection_notifier.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
@@ -121,6 +122,7 @@ class ActiveProxyDelayIndicator extends HookConsumerWidget with InfraLogger {
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
+          focusColor: Colors.transparent,
           onTap: () async {
             final notifier = ref.read(activeProxyNotifierProvider.notifier);
             try {
@@ -160,7 +162,7 @@ class ActiveProxyDelayIndicator extends HookConsumerWidget with InfraLogger {
 
     return SizedBox(
       height: _slotHeight,
-      child: Center(child: pingPill),
+      child: Center(child: DoomNetTvFocusFrame(radius: 18, child: pingPill)),
     );
   }
 }

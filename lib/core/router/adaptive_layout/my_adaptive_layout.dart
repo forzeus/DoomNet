@@ -80,7 +80,16 @@ class MyAdaptiveLayout extends HookConsumerWidget {
                       FocusScope(
                         node: navScopeNode,
                         autofocus: true,
-                        child: NavigationRail(
+                        child: Theme(
+                          data: Theme.of(context).copyWith(
+                            focusColor: Colors.transparent,
+                            hoverColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            splashColor: Colors.transparent,
+                          ),
+                          child: NavigationRail(
+                          useIndicator: false,
+                          indicatorColor: Colors.transparent,
                           extended: Breakpoint(context).isDesktop(),
                           destinations: _navRailDests(_actions(t, showProfilesAction, isMobileBreakpoint)),
                           selectedIndex: navigationShell.currentIndex,
@@ -109,6 +118,7 @@ class MyAdaptiveLayout extends HookConsumerWidget {
                                   ),
                                 )
                               : null,
+                          ),
                         ),
                       ),
                       // Keeps the rail visible to screen readers (#2097).

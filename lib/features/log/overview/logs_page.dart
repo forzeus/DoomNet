@@ -8,6 +8,7 @@ import 'package:hiddify/core/notification/in_app_notification_controller.dart';
 import 'package:hiddify/core/preferences/general_preferences.dart';
 import 'package:hiddify/core/router/bottom_sheets/bottom_sheets_notifier.dart';
 import 'package:hiddify/core/router/dialog/dialog_notifier.dart';
+import 'package:hiddify/doomnet/doomnet_tv_focus.dart';
 import 'package:hiddify/features/connection/notifier/connection_notifier.dart';
 import 'package:hiddify/features/log/model/log_level.dart' as engine;
 import 'package:hiddify/features/log/overview/logs_overview_notifier.dart';
@@ -347,7 +348,8 @@ class LogFilterBar extends ConsumerWidget {
   /// the area you can see. The padding is part of that: without it the field is
   /// only as tall as its text, about 18px, and most clicks land beside it.
   Widget _search(ThemeData theme, Translations t) {
-    return TextField(
+    return DoomNetTvLocalOutline(
+      child: TextField(
       controller: search,
       onChanged: onSearch,
       style: theme.textTheme.labelMedium,
@@ -357,11 +359,16 @@ class LogFilterBar extends ConsumerWidget {
         filled: true,
         fillColor: theme.colorScheme.surfaceContainerHighest,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF81FFC0), width: 2.5),
+        ),
         hintText: t.common.filter,
         hintStyle: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         contentPadding: const EdgeInsets.only(right: 10, top: 9, bottom: 9),
         prefixIcon: Icon(FluentIcons.search_20_regular, size: 15, color: theme.colorScheme.onSurfaceVariant),
         prefixIconConstraints: const BoxConstraints(minWidth: 30),
+      ),
       ),
     );
   }
@@ -399,7 +406,9 @@ class _DropdownChip<T> extends StatelessWidget {
     final theme = Theme.of(context);
     final current = value;
 
-    return PopupMenuButton<Object>(
+    return DoomNetTvFocusFrame(
+      child: PopupMenuButton<Object>(
+      borderRadius: BorderRadius.circular(8),
       tooltip: '',
       position: PopupMenuPosition.under,
       initialValue: current ?? _all,
@@ -420,6 +429,7 @@ class _DropdownChip<T> extends StatelessWidget {
             Icon(Icons.arrow_drop_down_rounded, size: 18, color: theme.colorScheme.onSurfaceVariant),
           ],
         ),
+      ),
       ),
     );
   }

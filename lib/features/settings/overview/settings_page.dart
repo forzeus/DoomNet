@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/router/dialog/dialog_notifier.dart';
 import 'package:hiddify/core/router/go_router/helper/active_breakpoint_notifier.dart';
+import 'package:hiddify/doomnet/doomnet_tv_focus.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/settings/notifier/config_option/config_option_notifier.dart';
 import 'package:hiddify/features/settings/notifier/reset_tunnel/reset_tunnel_notifier.dart';
@@ -220,12 +221,17 @@ class SettingsSection extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: subtitle,
-      trailing: const Icon(Icons.chevron_right_rounded),
-      onTap: () => context.go(namedLocation),
+    return DoomNetTvFocusFrame(
+      radius: 9,
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+        focusColor: Colors.transparent,
+        leading: Icon(icon),
+        title: Text(title),
+        subtitle: subtitle,
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: () => context.go(namedLocation),
+      ),
     );
   }
 }

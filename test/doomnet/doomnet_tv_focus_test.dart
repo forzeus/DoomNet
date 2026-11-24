@@ -4,6 +4,55 @@ import 'package:hiddify/doomnet/doomnet_tv_focus.dart';
 import 'package:hiddify/doomnet/doomnet_tv_remote.dart';
 
 void main() {
+  testWidgets('local outline does not add a focus target and follows the whole control', (tester) async {
+    final node = FocusNode();
+    addTearDown(node.dispose);
+    var activated = 0;
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: Center(
+      child: DoomNetTvFocusFrame(
+        radius: 18,
+        child: SizedBox(width: 200, height: 48, child: TextButton(
+          autofocus: true,
+          focusNode: node,
+          onPressed: () => activated++,
+          child: const Text('Filter'),
+        )),
+      ),
+    ))));
+    await tester.pumpAndSettle();
+    expect(node.hasPrimaryFocus, isTrue);
+    expect(DoomNetTvLocalOutline.covers(node), isTrue);
+    final frame = find.descendant(of: find.byType(DoomNetTvFocusFrame), matching: find.byWidgetPredicate(
+      (widget) => widget is DecoratedBox && widget.position == DecorationPosition.foreground,
+    ));
+    expect(frame, findsOneWidget);
+    expect(tester.getSize(frame), const Size(200, 48));
+    final decoration = tester.widget<DecoratedBox>(frame).decoration as BoxDecoration;
+    expect(decoration.borderRadius, BorderRadius.circular(18));
+    expect((decoration.border! as Border).top.color, const Color(0xFF81FFC0));
+    final context = tester.element(find.byType(DoomNetTvFocusFrame));
+    DoomNetTvRemoteBridge.handleAndroidKey(context, 23);
+    await tester.pump();
+    expect(activated, 1);
+  });
+
+  testWidgets('self-painted circular control suppresses global rectangle', (tester) async {
+    final node = FocusNode();
+    addTearDown(node.dispose);
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: Center(
+      child: DoomNetTvLocalOutline(child: SizedBox.square(
+        dimension: 100,
+        child: IconButton(
+          autofocus: true, focusNode: node, onPressed: () {},
+          icon: const Icon(Icons.power_settings_new),
+        ),
+      )),
+    ))));
+    await tester.pumpAndSettle();
+    expect(node.hasPrimaryFocus, isTrue);
+    expect(DoomNetTvLocalOutline.covers(node), isTrue);
+  });
+
   testWidgets('right enters page, OK activates, left restores sidebar', (tester) async {
     final rail = FocusScopeNode();
     final content = FocusScopeNode();

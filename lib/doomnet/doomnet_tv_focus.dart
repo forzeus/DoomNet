@@ -109,7 +109,64 @@ class DoomNetTvFocusZones extends InheritedWidget {
   bool updateShouldNotify(DoomNetTvFocusZones oldWidget) => rail != oldWidget.rail || content != oldWidget.content;
 }
 
-/// A single inexpensive high-contrast focus border, painted over any page,
+/// Marker for a control that paints its own focus decoration. This does not
+/// create a focus node or change keyboard traversal.
+class DoomNetTvLocalOutline extends InheritedWidget {
+  const DoomNetTvLocalOutline({super.key, required super.child});
+
+  static bool covers(FocusNode? node) =>
+      node?.context?.getInheritedWidgetOfExactType<DoomNetTvLocalOutline>() != null;
+
+  @override
+  bool updateShouldNotify(DoomNetTvLocalOutline oldWidget) => false;
+}
+
+/// Paint a focus border in the control's own layout, so it moves and resizes
+/// with the control. The ancestor Focus is never a D-pad destination itself.
+class DoomNetTvFocusFrame extends StatefulWidget {
+  const DoomNetTvFocusFrame({
+    super.key,
+    required this.child,
+    this.radius = 8,
+  });
+
+  final Widget child;
+  final double radius;
+
+  @override
+  State<DoomNetTvFocusFrame> createState() => _DoomNetTvFocusFrameState();
+}
+
+class _DoomNetTvFocusFrameState extends State<DoomNetTvFocusFrame> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(widget.radius);
+    return DoomNetTvLocalOutline(
+      child: Focus(
+        canRequestFocus: false,
+        skipTraversal: true,
+        onFocusChange: (value) {
+          if (mounted && _focused != value) setState(() => _focused = value);
+        },
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            border: Border.all(
+              color: _focused ? const Color(0xFF81FFC0) : Colors.transparent,
+              width: 2.5,
+            ),
+          ),
+          child: ClipRRect(borderRadius: radius, child: widget.child),
+        ),
+      ),
+    );
+  }
+}
+
+/// A single inexpensive high-contrast fallback focus border, painted over any page,
 /// including dialogs. Independent of individual Material control themes.
 class DoomNetTvFocusOutline extends StatefulWidget {
   const DoomNetTvFocusOutline({super.key, required this.enabled, required this.child});
@@ -153,22 +210,23 @@ class _FocusOutlinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (!enabled.value) return;
     final focused = FocusManager.instance.primaryFocus;
-    if (!DoomNetTvFocusZones.isControl(focused)) return;
+    if (!DoomNetTvFocusZones.isControl(focused) || DoomNetTvLocalOutline.covers(focused)) return;
     final rect = DoomNetTvFocusZones.bounds(focused);
     final origin = context.findRenderObject();
     if (rect == null || origin is! RenderBox || !origin.attached) return;
     final local = Rect.fromPoints(origin.globalToLocal(rect.topLeft), origin.globalToLocal(rect.bottomRight));
     final visible = local.intersect(Offset.zero & size);
     if (visible.isEmpty || !visible.isFinite) return;
-    final border = RRect.fromRectAndRadius(visible.deflate(2), const Radius.circular(9));
+    if (visible.width <= 4 || visible.height <= 4) return;
+    final border = RRect.fromRectAndRadius(visible.deflate(1.5), const Radius.circular(9));
+    canvas.save();
+    canvas.clipRect(visible);
     canvas.drawRRect(border, Paint()
-      ..color = const Color(0xCC00150B)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 5);
-    canvas.drawRRect(border, Paint()
+      ..isAntiAlias = true
       ..color = const Color(0xFF81FFC0)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5);
+    canvas.restore();
   }
 
   @override
