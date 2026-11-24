@@ -109,7 +109,7 @@ class AboutPage extends HookConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Image(
-                            image: AssetImage('assets/images/doomnet_orbit.webp'),
+                            image: AssetImage('assets/images/doomnet_orbit_hd.png'),
                             width: 84,
                             height: 84,
                             filterQuality: FilterQuality.medium,

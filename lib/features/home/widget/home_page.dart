@@ -36,7 +36,7 @@ class HomePage extends HookConsumerWidget {
         title: Row(
           children: [
             const Image(
-              image: AssetImage('assets/images/doomnet_orbit.webp'),
+              image: AssetImage('assets/images/doomnet_orbit_hd.png'),
               width: 38,
               height: 38,
               filterQuality: FilterQuality.medium,
@@ -48,7 +48,7 @@ class HomePage extends HookConsumerWidget {
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  'Для открытия всех серверов подписки, Подключитесь',
+                  'Для открытия всех стран в вашей подписке, нажмите Подключиться.',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,

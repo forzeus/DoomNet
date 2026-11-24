@@ -166,8 +166,8 @@ flutter:
     # - assets/core/geoip.db
     # - assets/core/geosite.db
     - assets/images/logo.svg
-    # DoomNet's own PNG-derived logo, stored as compact WebP for Android TV.
-    - assets/images/doomnet_orbit.webp
+    # High-resolution transparent DoomNet logo, lossless for the TV splash.
+    - assets/images/doomnet_orbit_hd.png
     - assets/images/tray_icon.ico
     - assets/images/tray_icon.png
     - assets/images/tray_icon_dark.ico

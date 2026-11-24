@@ -63,10 +63,10 @@ class _DoomNetIntroGateState extends State<DoomNetIntroGate>
                 ),
                 child: const Center(
                   child: Image(
-                    image: AssetImage('assets/images/doomnet_orbit.webp'),
+                    image: AssetImage('assets/images/doomnet_orbit_hd.png'),
                     width: 290,
                     height: 290,
-                    filterQuality: FilterQuality.medium,
+                    filterQuality: FilterQuality.high,
                   ),
                 ),
               ),
