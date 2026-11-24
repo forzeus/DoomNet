@@ -13,6 +13,7 @@ import 'package:hiddify/core/theme/theme_extensions.dart';
 import 'package:hiddify/core/widget/ambient_motion.dart';
 import 'package:hiddify/core/widget/animated_text.dart';
 import 'package:hiddify/core/widget/unique_keys_layout.dart';
+import 'package:hiddify/doomnet/doomnet_tv_focus.dart';
 import 'package:hiddify/features/chain/model/chain_enum.dart';
 import 'package:hiddify/features/chain/overview/chain_mode_icon.dart';
 import 'package:hiddify/features/connection/model/connection_failure.dart';
@@ -467,7 +468,9 @@ class _ConnectionButton extends HookWidget {
                         shape: const CircleBorder(),
                         color: Colors.transparent,
                         clipBehavior: Clip.antiAlias,
-                        child: InkWell(
+                        child: DoomNetTvLocalOutline(
+                          child: InkWell(
+                          customBorder: const CircleBorder(),
                           onTap: onTap,
                           onFocusChange: (value) => focused.value = value,
                           focusColor: Colors.transparent,
@@ -488,6 +491,7 @@ class _ConnectionButton extends HookWidget {
                                ),
                              ),
                            ),
+                          ),
                         ),
                       ),
                       Positioned.fill(
@@ -500,7 +504,7 @@ class _ConnectionButton extends HookWidget {
                               child: DecoratedBox(
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: theme.colorScheme.primary, width: 3),
+                                  border: Border.all(color: const Color(0xFF81FFC0), width: 3),
                                 ),
                               ),
                             ),

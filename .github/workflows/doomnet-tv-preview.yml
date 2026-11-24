@@ -10,6 +10,7 @@ on:
       - 'feat/doomnet-green-logo-assets-v01'
       - 'fix/doomnet-tv-native-remote-v02'
       - 'fix/doomnet-tv-focus-zones-v03'
+      - 'fix/doomnet-tv-focus-polish-v04'
   workflow_dispatch:
 
 permissions:
