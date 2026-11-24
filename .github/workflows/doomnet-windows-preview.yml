@@ -68,15 +68,7 @@ jobs:
           }
           if (!(Test-Path $iscc)) { throw 'Inno Setup compiler missing' }
           $version = ((Get-Content pubspec.yaml | Select-String '^version:').Line -replace '^version:\s*','').Split('+')[0].Trim()
-          if ($version -notmatch '^\d+\.\d+\.\d+
-        uses: actions/upload-artifact@v6
-        with:
-          name: DoomNet-Windows-Portable-x64-PREVIEW
-          path: out/DoomNet-Windows-Portable-x64.zip
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 14
-) { throw 'Invalid version' }
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid version' }
           $source = (Resolve-Path 'build/windows/x64/runner/Release').Path
           $output = (Resolve-Path out).Path
           & $iscc "/DMyAppVersion=$version" "/DSourceDir=$source" "/O$output" 'windows/packaging/exe/doomnet.iss'

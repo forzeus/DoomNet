@@ -10,7 +10,7 @@ abstract class GithubReleaseParser {
   static RemoteVersionEntity? parse(Map<String, dynamic> json, {bool windowsChannel = false}) {
     if (json['draft'] == true) return null;
     final fullTag = (json['tag_name'] as String? ?? '').trim();
-    final match = (windowsChannel ? RegExp(r'^doomnet-windows-v(\d+\.\d+\.\d+);
+    final match = (windowsChannel ? RegExp(r'^doomnet-windows-v(\d+\.\d+\.\d+)$') : _tag).firstMatch(fullTag);
     if (match == null) return null;
     final suffix = windowsChannel ? '' : (match.group(2) ?? '');
     final flavor = suffix == Environment.dev.name ? Environment.dev : Environment.prod;
