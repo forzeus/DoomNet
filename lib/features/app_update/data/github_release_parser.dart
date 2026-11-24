@@ -7,12 +7,14 @@ abstract class GithubReleaseParser {
   static final _tag = RegExp(r'^(?:doomnet-)?v?(\d+\.\d+\.\d+)(?:[-.]([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?$');
 
   /// The release, or null when its tag names no version or it is a draft.
-  static RemoteVersionEntity? parse(Map<String, dynamic> json) {
+  static final _windowsTag = RegExp(r'^doomnet-windows-v(\d+\.\d+\.\d+)$');
+
+  static RemoteVersionEntity? parse(Map<String, dynamic> json, {bool windowsChannel = false}) {
     if (json['draft'] == true) return null;
     final fullTag = (json['tag_name'] as String? ?? '').trim();
-    final match = _tag.firstMatch(fullTag);
+    final match = (windowsChannel ? _windowsTag : _tag).firstMatch(fullTag);
     if (match == null) return null;
-    final suffix = match.group(2) ?? '';
+    final suffix = windowsChannel ? '' : (match.group(2) ?? '');
     final flavor = suffix == Environment.dev.name ? Environment.dev : Environment.prod;
     final assets = [
       for (final asset in json['assets'] as List? ?? const [])
@@ -24,9 +26,14 @@ abstract class GithubReleaseParser {
             digest: asset['digest'] is String ? asset['digest'] as String : null,
           ),
     ];
+    if (windowsChannel &&
+        (!assets.any((a) => a.name == 'DoomNet-Windows-Setup-x64.exe') ||
+         !assets.any((a) => a.name == 'DoomNet-Windows-Portable-x64.zip'))) {
+      return null;
+    }
     return RemoteVersionEntity(
       version: match.group(1)!,
-      buildNumber: match.group(3) ?? '',
+      buildNumber: windowsChannel ? '' : (match.group(3) ?? ''),
       releaseTag: fullTag,
       // the release workflow uploads every release as a GitHub pre-release and it is promoted to
       // a full release once tested: until then only beta users get it, as they get a .dev tag

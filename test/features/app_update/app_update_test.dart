@@ -28,6 +28,20 @@ Map<String, dynamic> _release(
 };
 
 void main() {
+  test('Windows releases cannot reach TV and only use DoomNet setup', () {
+    final json = _release('doomnet-windows-v5.9.23', assets: [
+      'DoomNet-Windows-Setup-x64.exe', 'DoomNet-Windows-Portable-x64.zip',
+    ]);
+    expect(GithubReleaseParser.parse(json), isNull);
+    final windows = GithubReleaseParser.parse(json, windowsChannel: true)!;
+    expect(windows.version, '5.9.23');
+    expect(InstallKind.windowsSetup.assetIn(windows)?.name, 'DoomNet-Windows-Setup-x64.exe');
+    expect(GithubReleaseParser.parse(_release('doomnet-v5.9.22'), windowsChannel: true), isNull);
+    expect(GithubReleaseParser.parse(_release('doomnet-windows-v5.9.24'), windowsChannel: true), isNull);
+    expect(InstallKind.windowsKind(portable: true, hasSetupMarker: true), InstallKind.windowsSetup);
+    expect(InstallKind.windowsKind(portable: true, hasSetupMarker: false), InstallKind.windowsPortable);
+  });
+
   group('a release tag', () {
     test('names its version', () {
       final release = GithubReleaseParser.parse(_release('v5.4.0', assets: ['Hiddify-MacOS.dmg']))!;
@@ -143,7 +157,7 @@ void main() {
     });
 
     test('each desktop install takes its own format, never a store build', () {
-      expect(asset(InstallKind.windowsSetup), 'Hiddify-Windows-Setup-x64.exe');
+      expect(asset(InstallKind.windowsSetup), isNull); // Do not install upstream Hiddify.
       expect(asset(InstallKind.linuxAppImage), 'Hiddify-Linux-x64.AppImage');
       expect(asset(InstallKind.linuxDeb), 'Hiddify-Debian-x64.deb');
       expect(asset(InstallKind.macOS), 'Hiddify-MacOS.dmg');

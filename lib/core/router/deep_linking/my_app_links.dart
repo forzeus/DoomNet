@@ -8,7 +8,8 @@ part 'my_app_links.g.dart';
 
 @riverpod
 Stream<String> myAppLinks(Ref ref) async* {
-  if (PlatformUtils.isWindows) {
+  // Do not take over existing Hiddify URL associations in a portable preview.
+  if (PlatformUtils.isWindows && !const bool.fromEnvironment('doomnet_windows_preview')) {
     for (final protocol in LinkParser.protocols) {
       registerProtocolHandler(protocol);
     }
