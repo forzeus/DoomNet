@@ -38,7 +38,7 @@ class AppUpdateRepositoryImpl with ExceptionHandler, InfraLogger implements AppU
 
       final releases = [
         for (final json in response.data!)
-          if (GithubReleaseParser.parse((json as Map).cast<String, dynamic>()) case final parsed?)
+          if (GithubReleaseParser.parse((json as Map).cast<String, dynamic>(), windowsChannel: PlatformUtils.isWindows) case final parsed?)
             if (includePreReleases || !parsed.preRelease) parsed,
       ];
       if (releases.isEmpty) return left(const AppUpdateFailure.unexpected());

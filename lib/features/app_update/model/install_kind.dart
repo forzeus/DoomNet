@@ -34,7 +34,10 @@ enum InstallKind {
   static InstallKind detect(Release release, {String? appImage, bool? debianPackage}) {
     if (!release.allowCustomUpdateChecker || kIsWeb) return store;
     if (Platform.isAndroid) return androidApk;
-    if (Platform.isWindows) return Environment.isPortable ? windowsPortable : windowsSetup;
+    if (Platform.isWindows) {
+      final marker = File('${File(Platform.resolvedExecutable).parent.path}${Platform.pathSeparator}doomnet-install.ini');
+      return windowsKind(portable: Environment.isPortable, hasSetupMarker: marker.existsSync());
+    }
     if (Platform.isMacOS) return macOS;
     if (Platform.isLinux) {
       if ((appImage ?? Platform.environment['APPIMAGE'] ?? '').isNotEmpty) return linuxAppImage;
@@ -44,6 +47,10 @@ enum InstallKind {
     }
     return store;
   }
+
+  // The setup and ZIP use identical binaries; only Setup creates this marker.
+  static InstallKind windowsKind({required bool portable, required bool hasSetupMarker}) =>
+      portable && !hasSetupMarker ? windowsPortable : windowsSetup;
 
   /// Whether the app downloads the update and installs it, not only points to it.
   bool get installsItself => switch (this) {
@@ -72,7 +79,7 @@ enum InstallKind {
                 _ => 'Hiddify-Android-universal.apk',
               }) ??
               release.asset('Hiddify-Android-universal.apk'),
-        windowsSetup => release.asset('Hiddify-Windows-Setup-x64.exe'),
+        windowsSetup => release.asset('DoomNet-Windows-Setup-x64.exe'),
         linuxAppImage => release.asset('Hiddify-Linux-${arm64 ? 'arm64' : 'x64'}.AppImage'),
         linuxDeb => release.asset('Hiddify-Debian-${arm64 ? 'arm64' : 'x64'}.deb'),
         macOS => release.asset('Hiddify-MacOS.dmg'),

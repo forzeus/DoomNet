@@ -40,7 +40,7 @@ jobs:
       - name: Analyze Dart
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Test Windows header and existing splash
-        run: flutter test test/doomnet/doomnet_windows_header_test.dart test/doomnet/doomnet_intro_gate_test.dart
+        run: flutter test test/doomnet/doomnet_windows_header_test.dart test/doomnet/doomnet_intro_gate_test.dart test/doomnet/doomnet_tv_focus_test.dart test/doomnet/doomnet_tv_remote_test.dart test/features/app_update/app_update_test.dart test/features/app_update/update_digest_test.dart
       - name: Build portable Windows release
         run: |
           $commit = (git rev-parse --short=7 HEAD)
@@ -56,13 +56,47 @@ jobs:
           New-Item -ItemType Directory -Force out | Out-Null
           if (Test-Path LICENSE) { Copy-Item LICENSE (Join-Path $release 'LICENSE') }
           Copy-Item DOOMNET_WINDOWS_PREVIEW.md (Join-Path $release 'DOOMNET_WINDOWS_PREVIEW.md')
-          Compress-Archive -Path "$release/*" -DestinationPath out/DoomNet-Windows-Portable-x64-PREVIEW.zip -Force
-          Get-FileHash out/DoomNet-Windows-Portable-x64-PREVIEW.zip -Algorithm SHA256 | Format-List
+          Compress-Archive -Path "$release/*" -DestinationPath out/DoomNet-Windows-Portable-x64.zip -Force
+          Get-FileHash out/DoomNet-Windows-Portable-x64.zip -Algorithm SHA256 | Format-List
+      - name: Build DoomNet per-user installer
+        shell: pwsh
+        run: |
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (!(Test-Path $iscc)) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          if (!(Test-Path $iscc)) { throw 'Inno Setup compiler missing' }
+          $version = ((Get-Content pubspec.yaml | Select-String '^version:').Line -replace '^version:\s*','').Split('+')[0].Trim()
+          if ($version -notmatch '^\d+\.\d+\.\d+
+        uses: actions/upload-artifact@v6
+        with:
+          name: DoomNet-Windows-Portable-x64-PREVIEW
+          path: out/DoomNet-Windows-Portable-x64.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+) { throw 'Invalid version' }
+          $source = (Resolve-Path 'build/windows/x64/runner/Release').Path
+          $output = (Resolve-Path out).Path
+          & $iscc "/DMyAppVersion=$version" "/DSourceDir=$source" "/O$output" 'windows/packaging/exe/doomnet.iss'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $setup = Join-Path $output 'DoomNet-Windows-Setup-x64.exe'
+          if (!(Test-Path $setup)) { throw 'Missing setup' }
+          Get-FileHash $setup -Algorithm SHA256 | Format-List
+      - name: Upload Windows setup preview
+        uses: actions/upload-artifact@v6
+        with:
+          name: DoomNet-Windows-Setup-x64-PREVIEW
+          path: out/DoomNet-Windows-Setup-x64.exe
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
       - name: Upload Windows portable preview
         uses: actions/upload-artifact@v6
         with:
           name: DoomNet-Windows-Portable-x64-PREVIEW
-          path: out/DoomNet-Windows-Portable-x64-PREVIEW.zip
+          path: out/DoomNet-Windows-Portable-x64.zip
           if-no-files-found: error
           compression-level: 0
           retention-days: 14

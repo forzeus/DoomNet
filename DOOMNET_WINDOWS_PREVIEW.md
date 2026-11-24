@@ -1,19 +1,11 @@
-# DoomNet for Windows — first x64 preview
+# DoomNet Windows x64 — 5.9.23 preview
 
-Baseline: signed Android TV 5.9.22. This is an isolated Windows preview branch, not a published release.
+Both the portable ZIP and per-user Setup.exe use the same tested Windows binaries.
+Setup installs into LocalAppData/Programs/DoomNet by default, creates Start menu and optional Desktop shortcuts, and registers uninstall. Russian and English installer languages.
+Exit DoomNet fully via the tray before manual installation or upgrades. Setup does not force-kill apps or remove shared VPN services. TUN/service coexistence with Hiddify is not verified; test without Hiddify running. Do not disable antivirus. No Authenticode signing yet.
 
-## Build and contents
-- Windows 10/11 x64 Flutter runner, with the existing upstream Windows VPN core.
-- DoomNet.exe, DoomNet window title and metadata; original copyright retained.
-- Windows app and tray icons generated from the existing HD D logo during Windows CI only.
-- Responsive title and normal desktop navigation rail mouse/keyboard feedback.
-- Portable ZIP, with data in doomnet_portable_data when writable. Extract the whole ZIP to a dedicated folder before launching. Do not copy just the EXE.
-- No installer or Authenticode signing in this preview. Do not bypass antivirus or SmartScreen.
-- URL handler registration disabled for the preview to avoid overriding existing app associations.
+User profiles remain in doomnet_portable_data beside the executable. The installer does not delete that directory. To migrate from the earlier portable preview, exit both copies and copy that directory to the installed folder only before using the installed copy (keep a backup). Do not copy from one running app to another.
 
-## Test scope and limitations
-Test on a clean Windows test environment without Hiddify or another active VPN. The upstream core still has its original helper executable names and shared Windows service identity; coexistence has not been verified. No change to the VPN core or service logic. Avoid entering sensitive credentials into unverified builds.
+Windows updates use only doomnet-windows-vX.Y.Z tags containing DoomNet-Windows-Setup-x64.exe and DoomNet-Windows-Portable-x64.zip. Existing Android TV clients ignore this tag format. Publish Windows releases with latest=false, never replace an existing release. The installed copy is identified via doomnet-install.ini; portable updates open the release page. Existing SHA-256 download verification remains in place. No automatic publication until the owner tests installation. SHA-256 does not replace Authenticode. First full in-app update needs two published Windows versions and a PC test.
 
-Check startup, resizing, taskbar and tray, keyboard and mouse, importing a subscription from clipboard, connecting/disconnecting, system proxy restoration and exit. Test TUN and elevated service behavior separately. Installer, independent service identity, update asset selection and code signing remain later work. Do not publish Windows-only versions as the latest Android TV release.
-
-Local build: generate icons with Python/Pillow, run make windows-prepare with CHANNEL=prod and then the portable flutter build command in .github/workflows/doomnet-windows-preview.yml. This preview requires the normal Flutter/Visual Studio C++ Windows toolchain.
+Source attribution and upstream licensing remain. Android TV main and 5.9.22 release untouched.
