@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -25,6 +26,7 @@ class MyAdaptiveLayout extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider).requireValue;
+    final windows = defaultTargetPlatform == TargetPlatform.windows;
     // TV/D-pad: let Flutter's Focus/Shortcuts pipeline handle arrow keys.
     // The old HardwareKeyboard handler returned true for *every* arrow key,
     // swallowing navigation before NavigationRail and the page could receive it.
@@ -81,15 +83,15 @@ class MyAdaptiveLayout extends HookConsumerWidget {
                         node: navScopeNode,
                         autofocus: true,
                         child: Theme(
-                          data: Theme.of(context).copyWith(
+                          data: windows ? Theme.of(context) : Theme.of(context).copyWith(
                             focusColor: Colors.transparent,
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             splashColor: Colors.transparent,
                           ),
                           child: NavigationRail(
-                          useIndicator: false,
-                          indicatorColor: Colors.transparent,
+                          useIndicator: windows,
+                          indicatorColor: windows ? Theme.of(context).colorScheme.secondaryContainer : Colors.transparent,
                           extended: Breakpoint(context).isDesktop(),
                           destinations: _navRailDests(_actions(t, showProfilesAction, isMobileBreakpoint)),
                           selectedIndex: navigationShell.currentIndex,

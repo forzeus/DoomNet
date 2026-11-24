@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:hiddify/doomnet/doomnet_windows_header.dart';
 import 'package:gap/gap.dart';
 import 'package:hiddify/core/theme/app_theme_mode.dart';
 import 'package:hiddify/core/theme/theme_preferences.dart';
@@ -33,7 +35,9 @@ class HomePage extends HookConsumerWidget {
         //         },
         //       )
         //     : null,
-        title: Row(
+        title: defaultTargetPlatform == TargetPlatform.windows
+            ? const DoomNetWindowsHeader()
+            : Row(
           children: [
             const Image(
               image: AssetImage('assets/images/doomnet_orbit_hd.png'),

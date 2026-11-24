@@ -1,0 +1,68 @@
+name: DoomNet Windows x64 preview
+
+on:
+  push:
+    branches:
+      - feat/doomnet-windows-preview-v01
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: doomnet-windows-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CHANNEL: prod
+  IS_GITHUB_ACTIONS: 1
+
+jobs:
+  windows-preview:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Generate DoomNet Windows and tray icons
+        run: |
+          python -m pip install Pillow==11.3.0
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python windows/scripts/generate_doomnet_icons.py
+      - name: Prepare Flutter and original Windows VPN core
+        uses: ./.github/actions/setup-flutter
+        with:
+          platform: windows
+          install-deps: 'false'
+          generated-code: 'false'
+      - name: Analyze Dart
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Test Windows header and existing splash
+        run: flutter test test/doomnet/doomnet_windows_header_test.dart test/doomnet/doomnet_intro_gate_test.dart
+      - name: Build portable Windows release
+        run: |
+          $commit = (git rev-parse --short=7 HEAD)
+          flutter build windows --release --target lib/main_prod.dart --dart-define=portable=true --dart-define=doomnet_windows_preview=true "--dart-define=commit=$commit"
+      - name: Verify bundle and package ZIP
+        run: |
+          $release = 'build/windows/x64/runner/Release'
+          foreach ($file in @('DoomNet.exe','flutter_windows.dll','hiddify-core.dll','HiddifyAdmin.exe','libcronet.dll','data/icudtl.bin','data/app.so','data/flutter_assets/assets/images/doomnet_orbit_hd.png')) {
+            if (!(Test-Path (Join-Path $release $file))) { throw "Missing runtime file: $file" }
+          }
+          $info = (Get-Item (Join-Path $release 'DoomNet.exe')).VersionInfo
+          if ($info.ProductName -ne 'DoomNet') { throw 'Unexpected executable branding' }
+          New-Item -ItemType Directory -Force out | Out-Null
+          if (Test-Path LICENSE) { Copy-Item LICENSE (Join-Path $release 'LICENSE') }
+          Copy-Item DOOMNET_WINDOWS_PREVIEW.md (Join-Path $release 'DOOMNET_WINDOWS_PREVIEW.md')
+          Compress-Archive -Path "$release/*" -DestinationPath out/DoomNet-Windows-Portable-x64-PREVIEW.zip -Force
+          Get-FileHash out/DoomNet-Windows-Portable-x64-PREVIEW.zip -Algorithm SHA256 | Format-List
+      - name: Upload Windows portable preview
+        uses: actions/upload-artifact@v6
+        with:
+          name: DoomNet-Windows-Portable-x64-PREVIEW
+          path: out/DoomNet-Windows-Portable-x64-PREVIEW.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
