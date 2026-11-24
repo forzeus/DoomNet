@@ -11,6 +11,7 @@ on:
       - 'fix/doomnet-tv-native-remote-v02'
       - 'fix/doomnet-tv-focus-zones-v03'
       - 'fix/doomnet-tv-focus-polish-v04'
+      - 'perf/doomnet-tv-safe-v01'
   workflow_dispatch:
 
 permissions:
@@ -57,7 +58,7 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Test Android TV remote focus and onboarding
-        run: flutter test test/features/intro/intro_layout_test.dart test/core/router/adaptive_layout_semantics_test.dart test/doomnet/doomnet_tv_remote_test.dart test/doomnet/doomnet_tv_focus_test.dart
+        run: flutter test test/features/intro/intro_layout_test.dart test/core/router/adaptive_layout_semantics_test.dart test/doomnet/doomnet_tv_remote_test.dart test/doomnet/doomnet_tv_focus_test.dart test/doomnet/doomnet_intro_gate_test.dart test/features/app_update/app_update_test.dart
 
       - name: Build the Android APK
         run: make android-apk-release
