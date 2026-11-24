@@ -12,6 +12,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
       expect(tester.takeException(), isNull);
       expect(find.byType(Image), findsOneWidget);
+      final wordmark = find.text('DoomNet');
+      expect(tester.widget<Text>(wordmark).style?.fontWeight, FontWeight.w600);
+      final logoCenter = tester.getCenter(find.byType(Image));
+      final textCenter = tester.getCenter(wordmark);
+      expect(textCenter.dy, closeTo(logoCenter.dy - 2, 0.6));
       expect(find.text(DoomNetWindowsHeader.notice), width >= 420 ? findsOneWidget : findsNothing);
     }
     await tester.pumpWidget(const SizedBox.shrink());

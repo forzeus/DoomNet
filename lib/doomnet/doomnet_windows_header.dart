@@ -13,6 +13,7 @@ class DoomNetWindowsHeader extends StatelessWidget {
     builder: (context, constraints) {
       final compact = constraints.maxWidth < 420;
       return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Image.asset(
             'assets/images/doomnet_orbit_hd.png',
@@ -26,7 +27,15 @@ class DoomNetWindowsHeader extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: DoomNetBrand(fontSize: compact ? 20 : 24),
+              child: Transform.translate(
+                // Optical alignment: the visible glyphs sit slightly below
+                // the center of the text line in the current desktop font.
+                offset: const Offset(0, -2),
+                child: DoomNetBrand(
+                  fontSize: compact ? 20 : 24,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
           if (!compact) ...[

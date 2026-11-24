@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 
 /// Animates only the DoomNet wordmark, not the surrounding TV layout.
 class DoomNetBrand extends StatefulWidget {
-  const DoomNetBrand({super.key, this.fontSize = 26, this.animate = true});
+  const DoomNetBrand({super.key, this.fontSize = 26, this.animate = true, this.fontWeight = FontWeight.w800});
   final double fontSize;
   final bool animate;
+  final FontWeight fontWeight;
   @override
   State<DoomNetBrand> createState() => _DoomNetBrandState();
 }
@@ -52,7 +53,7 @@ class _DoomNetBrandState extends State<DoomNetBrand> with SingleTickerProviderSt
         maxLines: 1,
         style: TextStyle(
           fontSize: widget.fontSize,
-          fontWeight: FontWeight.w800,
+          fontWeight: widget.fontWeight,
           letterSpacing: .7,
           height: 1.08,
           color: Colors.white,
