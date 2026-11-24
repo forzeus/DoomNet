@@ -30,6 +30,12 @@ class _DoomNetIntroGateState extends State<DoomNetIntroGate>
       }
     });
 
+  // Drive only the final 550 ms fade from the existing controller.
+  // CurveTween avoids allocating a new animation on every build.
+  late final Animation<double> _fade = Tween<double>(begin: 1, end: 0)
+      .chain(CurveTween(curve: const Interval(2.45 / 3, 1, curve: Curves.easeInOutCubic)))
+      .animate(_intro);
+
   @override
   void initState() {
     super.initState();
@@ -50,41 +56,47 @@ class _DoomNetIntroGateState extends State<DoomNetIntroGate>
       if (!_finished)
         Positioned.fill(
           child: AbsorbPointer(
-            child: AnimatedBuilder(
-              animation: _intro,
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF13432A), Color(0xFF061B10), Color(0xFF020805)],
-                    stops: [0, .55, 1],
+            child: FadeTransition(
+              key: const ValueKey('doomnet-splash'),
+              opacity: _fade,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // The background is full-screen but static. Keep it in a
+                  // separate layer instead of scaling it with the logo.
+                  const RepaintBoundary(
+                    key: ValueKey('doomnet-splash-background'),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF13432A), Color(0xFF061B10), Color(0xFF020805)],
+                          stops: [0, .55, 1],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                child: const Center(
-                  child: Image(
-                    image: AssetImage('assets/images/doomnet_orbit_hd.png'),
-                    width: 290,
-                    height: 290,
-                    filterQuality: FilterQuality.high,
+                  Center(
+                    child: AnimatedBuilder(
+                      animation: _intro,
+                      child: const RepaintBoundary(
+                        child: Image(
+                          image: AssetImage('assets/images/doomnet_orbit_hd.png'),
+                          width: 290,
+                          height: 290,
+                          filterQuality: FilterQuality.high,
+                        ),
+                      ),
+                      builder: (context, child) => Transform.scale(
+                        key: const ValueKey('doomnet-splash-pulse'),
+                        scale: 1 + .035 * math.sin(_intro.value * math.pi),
+                        child: child,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-              builder: (context, child) {
-                const start = 2.45 / 3;
-                final fade = ((_intro.value - start) / (1 - start))
-                    .clamp(0.0, 1.0).toDouble();
-                final opacity = _intro.value <= start
-                    ? 1.0
-                    : 1 - Curves.easeInOutCubic.transform(fade);
-                // One gentle, slow "breath" while the intro is visible,
-                // without a bright flash or an endlessly running animation.
-                final pulse = 1 + .035 * math.sin(_intro.value * math.pi);
-                return Opacity(
-                  opacity: opacity,
-                  child: Transform.scale(scale: pulse, child: child),
-                );
-              },
             ),
           ),
         ),
