@@ -488,6 +488,8 @@ class _LogRow extends ConsumerWidget {
     final time = record.time.toIso8601String().split('T')[1].split('.').first;
 
     return InkWell(
+      // A log row must have a useful OK action as well as mouse long-press.
+      onTap: () => _copy(context, ref, _center(context)),
       onLongPress: () => _copy(context, ref, _center(context)),
       onSecondaryTapDown: (details) => _copy(context, ref, details.globalPosition),
       child: Padding(

@@ -109,7 +109,7 @@ class IntroPage extends HookConsumerWidget with PresLogger {
                           : constraints.maxWidth;
                       final size = width * 0.4;
                       return Image.asset(
-                        'assets/images/doomnet_orbit.webp',
+                        'assets/images/doomnet_orbit_hd.png',
                         width: size,
                         height: size,
                         fit: BoxFit.contain,

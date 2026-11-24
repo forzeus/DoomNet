@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hiddify/doomnet/doomnet_tv_focus.dart';
 
 /// Receives Android TV hardware D-pad events directly from MainActivity.
 ///
@@ -32,26 +33,40 @@ class DoomNetTvRemoteBridge extends StatefulWidget {
       22 => TraversalDirection.right,
       _ => null,
     };
+    final activate = const {23, 66, 160, 96}.contains(keyCode);
+    if (direction == null && !activate) return false;
+    final manager = FocusManager.instance;
+    // Fast remote presses must observe the previous pending focus request.
+    manager.applyFocusChangesIfNeeded();
+    final node = manager.primaryFocus;
+    if (!DoomNetTvFocusZones.isControl(node)) {
+      final scope = node?.nearestScope ?? manager.rootScope;
+      final candidates = DoomNetTvFocusZones.controls(scope);
+      if (candidates.isNotEmpty) {
+        DoomNetTvFocusZones.focus(candidates.first);
+      }
+      return true;
+    }
+    final current = node!;
+    final focusedContext = current.context!;
     if (direction != null) {
-      final node = FocusManager.instance.primaryFocus;
-      if (node != null && node.context != null) {
-        node.focusInDirection(direction);
-      } else {
-        // First press, or route/dialog just replaced its last focus node.
-        FocusScope.of(context).nextFocus();
+      final zones = focusedContext.getInheritedWidgetOfExactType<DoomNetTvFocusZones>();
+      if (zones != null && zones.move(current, direction)) return true;
+      if (!current.focusInDirection(direction)) {
+        final next = DoomNetTvFocusZones.directional(
+          current, DoomNetTvFocusZones.controls(current.nearestScope), direction,
+        );
+        if (next != null) DoomNetTvFocusZones.focus(next);
       }
       return true;
     }
-    if (const {23, 66, 160, 96}.contains(keyCode)) {
-      final focusedContext = FocusManager.instance.primaryFocus?.context;
-      if (focusedContext != null) {
-        Actions.maybeInvoke(focusedContext, const ActivateIntent());
-      } else {
-        FocusScope.of(context).nextFocus();
-      }
-      return true;
+    final editor = focusedContext.findAncestorStateOfType<EditableTextState>();
+    if (editor != null) {
+      editor.requestKeyboard();
+    } else {
+      Actions.maybeInvoke(focusedContext, const ActivateIntent());
     }
-    return false;
+    return true;
   }
 
   @override
@@ -60,6 +75,7 @@ class DoomNetTvRemoteBridge extends StatefulWidget {
 
 class _DoomNetTvRemoteBridgeState extends State<DoomNetTvRemoteBridge> {
   bool? _lastTvViewport;
+  FocusHighlightStrategy? _originalHighlightStrategy;
 
   @override
   void initState() {
@@ -80,7 +96,14 @@ class _DoomNetTvRemoteBridgeState extends State<DoomNetTvRemoteBridge> {
     _lastTvViewport = wideScreen;
     DoomNetTvRemoteBridge._channel
         .invokeMethod<bool>('start', wideScreen)
-        .then((enabled) => DoomNetTvRemoteBridge.nativeBridgeEnabled.value = enabled == true)
+        .then((enabled) {
+          if (!mounted) return;
+          DoomNetTvRemoteBridge.nativeBridgeEnabled.value = enabled == true;
+          if (enabled == true) {
+            _originalHighlightStrategy ??= FocusManager.instance.highlightStrategy;
+            FocusManager.instance.highlightStrategy = FocusHighlightStrategy.alwaysTraditional;
+          }
+        })
         .catchError((Object _) {});
   }
 
@@ -96,11 +119,17 @@ class _DoomNetTvRemoteBridgeState extends State<DoomNetTvRemoteBridge> {
     if (!kIsWeb && Platform.isAndroid) {
       DoomNetTvRemoteBridge._channel.setMethodCallHandler(null);
       DoomNetTvRemoteBridge.nativeBridgeEnabled.value = false;
+      if (_originalHighlightStrategy != null) {
+        FocusManager.instance.highlightStrategy = _originalHighlightStrategy!;
+      }
       DoomNetTvRemoteBridge._channel.invokeMethod<void>('stop').catchError((Object _) {});
     }
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) => DoomNetTvFocusOutline(
+    enabled: DoomNetTvRemoteBridge.nativeBridgeEnabled,
+    child: widget.child,
+  );
 }

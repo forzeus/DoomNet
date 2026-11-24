@@ -6,6 +6,7 @@ import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/router/adaptive_layout/shell_route_action.dart';
 import 'package:hiddify/core/router/go_router/helper/active_breakpoint_notifier.dart';
 import 'package:hiddify/core/router/go_router/routing_config_notifier.dart';
+import 'package:hiddify/doomnet/doomnet_tv_focus.dart';
 import 'package:hiddify/features/about/widget/sidebar_version_label.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -27,7 +28,8 @@ class MyAdaptiveLayout extends HookConsumerWidget {
     // TV/D-pad: let Flutter's Focus/Shortcuts pipeline handle arrow keys.
     // The old HardwareKeyboard handler returned true for *every* arrow key,
     // swallowing navigation before NavigationRail and the page could receive it.
-    final navScopeNode = useFocusScopeNode();
+    final navScopeNode = useFocusScopeNode(debugLabel: 'DoomNet sidebar');
+    final contentScopeNode = useFocusScopeNode(debugLabel: 'DoomNet page');
     // Owns the system back press for the whole shell.
     //
     // It has to sit here, on the visible shell, and nowhere else. A PopScope
@@ -70,7 +72,10 @@ class MyAdaptiveLayout extends HookConsumerWidget {
           child: Scaffold(
             body: isMobileBreakpoint
                 ? navigationShell
-                : Row(
+                : DoomNetTvFocusZones(
+                    rail: navScopeNode,
+                    content: contentScopeNode,
+                    child: Row(
                     children: [
                       FocusScope(
                         node: navScopeNode,
@@ -79,7 +84,23 @@ class MyAdaptiveLayout extends HookConsumerWidget {
                           extended: Breakpoint(context).isDesktop(),
                           destinations: _navRailDests(_actions(t, showProfilesAction, isMobileBreakpoint)),
                           selectedIndex: navigationShell.currentIndex,
-                          onDestinationSelected: (index) => _onTap(context, index),
+                          onDestinationSelected: (index) {
+                            final wasInRail = navScopeNode.hasFocus;
+                            final previous = FocusManager.instance.primaryFocus;
+                            _onTap(context, index);
+                            if (wasInRail) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!context.mounted) return;
+                                if (previous != null &&
+                                    navScopeNode.descendants.contains(previous) &&
+                                    previous.canRequestFocus) {
+                                  previous.requestFocus();
+                                } else {
+                                  navScopeNode.requestFocus();
+                                }
+                              });
+                            }
+                          },
                           trailing: Breakpoint(context).isDesktop()
                               ? const Expanded(
                                   child: Align(
@@ -97,8 +118,14 @@ class MyAdaptiveLayout extends HookConsumerWidget {
                       // it, up to the nearest container. Without this boundary
                       // that reached the rail, so NVDA saw no sidebar at all
                       // (flutter/flutter#135656).
-                      Expanded(child: Semantics(container: true, child: navigationShell)),
+                      Expanded(
+                        child: FocusScope(
+                          node: contentScopeNode,
+                          child: Semantics(container: true, child: navigationShell),
+                        ),
+                      ),
                     ],
+                  ),
                   ),
             bottomNavigationBar: isMobileBreakpoint
                 ? FocusScope(

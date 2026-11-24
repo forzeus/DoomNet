@@ -62,7 +62,7 @@ class MainActivity : FlutterFragmentActivity(), ServiceConnection.Callback {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (isTelevision && tvRemoteReady && event.keyCode in setOf(
+        if (tvRemoteReady && event.keyCode in setOf(
                 KeyEvent.KEYCODE_DPAD_UP,
                 KeyEvent.KEYCODE_DPAD_DOWN,
                 KeyEvent.KEYCODE_DPAD_LEFT,

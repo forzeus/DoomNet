@@ -59,6 +59,8 @@
 
         <activity
             android:name=".MainActivity"
+            android:icon="@drawable/doomnet_menu"
+            android:banner="@drawable/doomnet_menu_banner"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:exported="true"
             android:hardwareAccelerated="true"

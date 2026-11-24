@@ -102,7 +102,9 @@ class ConnectionButton extends HookConsumerWidget {
       upload: upload,
       label: switch (look) {
         _Look.loading => "",
-        _Look.disconnected => t.connection.tapToConnect,
+        _Look.disconnected => Localizations.localeOf(context).languageCode == 'ru'
+            ? 'Подключиться'
+            : 'Connect',
         _Look.connecting => t.connection.connecting,
         _Look.waiting => t.connection.waiting,
         _Look.noProxies => t.connection.noAvailableProxies,
@@ -110,7 +112,9 @@ class ConnectionButton extends HookConsumerWidget {
         _Look.connected when degraded =>
           health!.pick == HealthState.failed ? h.pickDead : h.hopFailed(chain: chainName),
         _Look.connected when hopPending => h.hopPending(chain: chainName),
-        _Look.connected => t.connection.connected,
+        _Look.connected => Localizations.localeOf(context).languageCode == 'ru'
+            ? 'Отключиться'
+            : 'Disconnect',
         _Look.hotReloading => t.connection.hotReloading,
         _Look.disconnecting => t.connection.disconnecting,
         _Look.failed => t.connection.failed,
