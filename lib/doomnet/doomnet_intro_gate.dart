@@ -1,5 +1,6 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import 'package:hiddify/doomnet/doomnet_brand.dart';
 
 /// Three seconds after Flutter begins rendering, including a 550ms fade out.
 class DoomNetIntroGate extends StatefulWidget {
@@ -18,6 +19,14 @@ class _DoomNetIntroGateState extends State<DoomNetIntroGate>
   )..addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
         setState(() => _finished = true);
+        // Make the TV's first focus target reachable after splash fade.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final focused = FocusManager.instance.primaryFocus;
+          if (focused == null || focused is FocusScopeNode) {
+            FocusScope.of(context).nextFocus();
+          }
+        });
       }
     });
 
@@ -43,8 +52,8 @@ class _DoomNetIntroGateState extends State<DoomNetIntroGate>
           child: AbsorbPointer(
             child: AnimatedBuilder(
               animation: _intro,
-              child: const DecoratedBox(
-                decoration: BoxDecoration(
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -52,7 +61,14 @@ class _DoomNetIntroGateState extends State<DoomNetIntroGate>
                     stops: [0, .55, 1],
                   ),
                 ),
-                child: Center(child: DoomNetBrand(fontSize: 64)),
+                child: const Center(
+                  child: Image(
+                    image: AssetImage('assets/images/doomnet_orbit.webp'),
+                    width: 290,
+                    height: 290,
+                    filterQuality: FilterQuality.medium,
+                  ),
+                ),
               ),
               builder: (context, child) {
                 const start = 2.45 / 3;
@@ -61,7 +77,13 @@ class _DoomNetIntroGateState extends State<DoomNetIntroGate>
                 final opacity = _intro.value <= start
                     ? 1.0
                     : 1 - Curves.easeInOutCubic.transform(fade);
-                return Opacity(opacity: opacity, child: child);
+                // One gentle, slow "breath" while the intro is visible,
+                // without a bright flash or an endlessly running animation.
+                final pulse = 1 + .035 * math.sin(_intro.value * math.pi);
+                return Opacity(
+                  opacity: opacity,
+                  child: Transform.scale(scale: pulse, child: child),
+                );
               },
             ),
           ),
