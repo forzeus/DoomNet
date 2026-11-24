@@ -46,7 +46,12 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 1200));
     expect(tester.widget<FadeTransition>(splash).opacity.value, inExclusiveRange(0, 1));
+    expect(node.canRequestFocus, isFalse);
+    // Flutter's interpolation simulation may still be running at exactly
+    // its duration (opacity already zero). Advance one display frame past
+    // the 3-second boundary so AnimationStatus.completed can remove the gate.
     await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 16));
     await tester.pump();
     expect(splash, findsNothing);
     expect(node.canRequestFocus, isTrue);
